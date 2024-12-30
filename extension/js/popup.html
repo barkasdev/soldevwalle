@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        html {
+            min-height: 5em;
+            min-width: 10em;
+            background: rgb(173, 169, 218);
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+            white-space: nowrap;
+        }
+
+        button {
+            text-wrap: nowrap
+        }
+
+        .log:has(> summary:empty) {
+            display: none;
+        }
+
+        .log p {
+            font-size: xx-small;
+        }
+
+        summary {
+            cursor: pointer;
+        }
+    </style>
+    <script type="module" src="popup.js">
+    </script>
+</head>
+
+<body>
+<h3>Solana Dev Wallet Ext</h3>
+<p><small>Do whatever.</small></p>
+<button id="btn_add">Report state</button>
+<details class="log" id="log">
+    <summary id="log-summary" title="Click to see the full log"></summary>
+</details>
+</body>
+
+</html>
