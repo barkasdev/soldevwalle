@@ -20,6 +20,7 @@ function handleError(error) {
 // these messages. Others may be listening as well.
 //
 // This function is imported into lib.rs
+/* global chrome */
 export function report_progress(msg) {
   // console.log(`Progress: ${msg}`)
   // we have to handle errors gracefully because if the sending fails,
