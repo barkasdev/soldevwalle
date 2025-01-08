@@ -1,11 +1,38 @@
-import React from 'react';
+import * as React from 'react';
+import { AppProvider } from '@toolpad/core/AppProvider';
+import {
+  AuthResponse,
+  SignInPage,
+  type AuthProvider,
+} from '@toolpad/core/SignInPage';
+import { useTheme } from '@mui/material/styles';
 
-const HomePage: React.FC = () => {
-    return (
-        <div className=" bg-gray-200 flex items-center justify-center border border-gray-400">
-            <h1 className="text-xl font-bold">Home Page</h1>
-        </div>
-    );
+// preview-start
+const providers = [
+  { id: 'github', name: 'GitHub' },
+];
+
+const signIn: (provider: AuthProvider) => void | Promise<AuthResponse> = async (
+  provider,
+) => {
+  // preview-start
+  const promise = new Promise<AuthResponse>((resolve) => {
+    setTimeout(() => {
+      console.log(`Sign in with ${provider.id}`);
+      resolve({ error: 'This is a fake error' });
+    }, 500);
+  });
+  // preview-end
+  return promise;
 };
 
-export default HomePage;
+export default function OAuthSignInPage() {
+  const theme = useTheme();
+  return (
+    // preview-start
+    <AppProvider theme={theme}>
+      <SignInPage signIn={signIn} providers={providers} />
+    </AppProvider>
+    // preview-end
+  );
+}
