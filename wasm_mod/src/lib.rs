@@ -42,6 +42,7 @@ pub async fn init_wasm() {
     // let drop = client.request_airdrop(&address, sol_to_lamports(1.0)).await;
     log("init WASM!");
     log(format!("{account:#?}").as_str());
+    log("huy!");
 }
 
 /// The main entry point callable from `background.js`.
