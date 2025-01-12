@@ -6,7 +6,12 @@ mod models;
 
 use constants::log;
 use solana_sdk::pubkey;
+use sqlite_wasm_rs::{c as ffi, init_sqlite, libsqlite3, sqlite};
+use sqlite_wasm_rs::libsqlite3::*;
+use std::ffi::CString;
+use sqlite_wasm_rs::c::SQLITE_OK;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_client_solana::{SolanaRpcClient, DEVNET};
 use web_sys::{Window, WorkerGlobalScope};
 
@@ -29,9 +34,70 @@ extern "C" {
     fn log(s: &str);
 }
 
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = sqlite3)]
+    pub fn initSqlite3() -> js_sys::Promise;
+}
+
+
+fn cstr(s: &str) -> CString {
+    CString::new(s).unwrap()
+}
+
 /// A demo function to test if WASM is callable from background.js
 #[wasm_bindgen]
 pub async fn init_wasm() {
+    //sqlite
+    let sqlite_init = ffi::init_sqlite().await;
+    if sqlite_init.is_err() {
+        //FIXME guard
+        log("Failed to initialize sqlite database");
+        return;
+    }
+    let mut db = std::ptr::null_mut();
+    let filename = CString::new("sqlite://soldevwalle.db").unwrap();
+    // let filename = CString::new("memory:soldevwalle.db").unwrap();
+    // See <https://sqlite.org/wasm/doc/trunk/persistence.md#opfs>
+    let vfs = CString::new("opfs").unwrap();
+    let ret = unsafe {
+        ffi::sqlite3_open_v2(
+            filename.as_ptr(),
+            &mut db as *mut _,
+            ffi::SQLITE_OPEN_READWRITE | ffi::SQLITE_OPEN_CREATE,
+            // Using std::ptr::null() is a memory DB
+            // std::ptr::null(),
+            vfs.as_ptr(),
+        )
+    };
+    if ret == ffi::SQLITE_OK {
+        log("sqlite initialized");
+    } else {
+        log("failed to initialize sqlite db");
+    }
+    let errmsg = std::ptr::null_mut();
+    // let sql = cstr("DROP TABLE COMPANY;");
+    // let ret = unsafe { ffi::sqlite3_exec(db, sql.as_ptr(), None, std::ptr::null_mut(), errmsg) };
+    // log(format!("sqlite exec returned: {}", &ret).as_str());
+    let sql = cstr(
+        "CREATE TABLE IF NOT EXISTS COMPANY(
+                        NAME           TEXT    NOT NULL );",
+    );
+    
+    let ret = unsafe { ffi::sqlite3_exec(db, sql.as_ptr(), None, std::ptr::null_mut(), errmsg) };
+    log(format!("sqlite exec returned: {}", &ret).as_str());
+    
+    let sql = cstr(
+        "INSERT INTO COMPANY(\
+        NAME) VALUES (\
+        \"John Doe\") ON CONFLICT DO NOTHING \
+        "
+    );
+    
+    let ret = unsafe { ffi::sqlite3_exec(db, sql.as_ptr(), None, std::ptr::null_mut(), errmsg) };
+    log(format!("sqlite insert into company returned: {}", &ret).as_str());
+    // SQLITE_OK
+    //
     let client = SolanaRpcClient::new(DEVNET);
     let address = pubkey!("GDX3G2D84Mj99XGMkVrp9vsHUHTzzuW7uh5tHrpehKbQ");
     // log("requesting airdrop");
@@ -63,7 +129,10 @@ pub async fn report_state(msg: &str) {
         "(backend)lib.rs: submitting the state for {}",
         msg
     ));
-    report_progress(&format!("submitting the state data for {}", msg))
+    report_progress(&format!(
+        "(from lib.rs) submitting the state data for {}",
+        msg
+    ))
 }
 
 /// This is a proxy for report_progress() in progress.js

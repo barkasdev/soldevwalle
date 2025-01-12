@@ -60,3 +60,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 );
 
+// console.log("creating a new worker");
+// var worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
+// console.log("worker created");
+// worker.onmessage = function (_a) {
+//     var data = _a.data;
+//     switch (data.type) {
+//         case 'log':
+//             console.log("Message: ".concat(data.payload.args));
+//             break;
+//         default:
+//             console.log("ERROR: Unhandled message: ".concat(data.type));
+//     }
+// };
+// export {};
