@@ -1,59 +1,65 @@
 {
-    "manifest_version": 3,
-    "name": "Solana Dev Wallet Ext",
-    "short_name": "soldevwallet",
-    "description": "Browser extension for monitoring Solana stats",
-    "version": "0.0.1",
-    "author": "@dmgorsky",
-    "minimum_chrome_version": "110",
-    "offline_enabled": false,
-    "action": {
-        "default_title": "Solana Dev Wallet",
-        "default_icon": {
-            "16": "assets/toolbar_icon_16.png",
-            "19": "assets/toolbar_icon_19.png",
-            "32": "assets/toolbar_icon_32.png",
-            "38": "assets/toolbar_icon_38.png"
-        },
-        "default_popup": "js/popup.html",
-        "show_matches": [
-            "*://*"
-        ]
+  "manifest_version": 3,
+  "name": "Solana Dev Wallet Ext",
+  "short_name": "soldevwallet",
+  "description": "Browser extension for monitoring Solana stats",
+  "version": "0.0.1",
+  "author": "@dmgorsky",
+  "minimum_chrome_version": "110",
+  "offline_enabled": false,
+  "action": {
+    "default_title": "Solana Dev Wallet",
+    "default_icon": {
+      "16": "assets/toolbar_icon_16.png",
+      "19": "assets/toolbar_icon_19.png",
+      "32": "assets/toolbar_icon_32.png",
+      "38": "assets/toolbar_icon_38.png"
     },
-    "content_scripts": [
-        {
-            "all_frames": true,
-            "matches": [
-                "<all_urls>"
-            ],
-            "js": [
-                "js/popup.js"
-            ],
-            "run_at": "document_end"
-        }
-    ],
-    "content_security_policy": {
-        "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
-    },
-    "background": {
-        "type": "module",
-        "service_worker": "js/background.js"
-    },
-    "permissions": [
-        "webRequest"
-    ],
-    "host_permissions": [
-        "*://*/*"
-    ],
-    "web_accessible_resources": [
-        {
-            "matches": [
-                "<all_urls>"
-            ],
-            "resources": [
-                "js/wasm/wasm_mod.js",
-                "js/wasm/wasm_mod_bg.wasm"
-            ]
-        }
+    "default_popup": "js/popup.html",
+    "show_matches": [
+      "*://*"
     ]
+  },
+  "content_scripts": [
+    {
+      "all_frames": true,
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "js/popup.js",
+        "js/worker.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self' 'wasm-unsafe-eval'; worker-src 'self' 'wasm-unsafe-eval';",
+    "sandbox": "sandbox allow-scripts; default-src 'self' 'wasm-unsafe-eval'; frame-src 'self' 'wasm-unsafe-eval'; worker-src 'self' 'wasm-unsafe-eval'"
+  },
+  "background": {
+    "type": "module",
+    "service_worker": "js/background.js"
+  },
+  "permissions": [
+    "storage",
+    "webRequest",
+    "unlimitedStorage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "js/wasm/wasm_mod.js",
+        "js/wasm/wasm_mod_bg.wasm",
+        "js/worker.js"
+      ]
+    }
+  ]
 }

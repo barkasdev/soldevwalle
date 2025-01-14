@@ -31,9 +31,10 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
 # allocator, however.
-wee_alloc = { version = "0.4.5", optional = true }
-wasm_client_solana = "0.7.0"
-solana-sdk = "2.1.5"
+#wee_alloc = { version = "0.4.5", optional = true }
+wasm_client_solana = "0.7.3"
+solana-sdk = "2.1.7"
+sqlite-wasm-rs = "0.1.0"
 
 [dependencies.web-sys]
 version = "0.3"
@@ -46,10 +47,11 @@ features = [
     'RequestInit',
     'RequestMode',
     'Response',
+    'FileSystem',
 ]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.36"
+wasm-bindgen-test = "0.3"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
