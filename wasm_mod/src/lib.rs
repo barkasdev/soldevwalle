@@ -56,7 +56,7 @@ pub async fn init_wasm() {
         return;
     }
     let mut db = std::ptr::null_mut();
-    let filename = CString::new("sqlite://soldevwalle.db").unwrap();
+    let filename = CString::new("soldevwalle.db").unwrap();
     // let filename = CString::new("memory:soldevwalle.db").unwrap();
     // See <https://sqlite.org/wasm/doc/trunk/persistence.md#opfs>
     let vfs = CString::new("opfs").unwrap();
@@ -66,8 +66,8 @@ pub async fn init_wasm() {
             &mut db as *mut _,
             ffi::SQLITE_OPEN_READWRITE | ffi::SQLITE_OPEN_CREATE,
             // Using std::ptr::null() is a memory DB
-            // std::ptr::null(),
-            vfs.as_ptr(),
+            std::ptr::null(),
+            // vfs.as_ptr(),
         )
     };
     if ret == ffi::SQLITE_OK {

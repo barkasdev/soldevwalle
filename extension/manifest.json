@@ -17,6 +17,7 @@
     },
     "default_popup": "js/popup.html",
     "show_matches": [
+      "<all_urls>",
       "*://*"
     ]
   },
@@ -28,9 +29,13 @@
       ],
       "js": [
         "js/popup.js",
-        "js/worker.js"
+        //        "js/worker.js",
+        //        "js/background.js",
+        //        "js/offscreen.js",
+        "js/background_copy.js",
+        "js/wasm/wasm_mod.js"
       ],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
   ],
   "content_security_policy": {
@@ -39,13 +44,15 @@
   },
   "background": {
     "type": "module",
-    "service_worker": "js/background.js"
+    "service_worker": "js/background_copy.js"
   },
   "permissions": [
-    "storage",
     "webRequest",
+    "storage",
     "unlimitedStorage",
-    "offscreen"
+    "offscreen",
+    "activeTab",
+    "system.storage"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -56,9 +63,11 @@
         "<all_urls>"
       ],
       "resources": [
+        "js/background_copy.js",
         "js/wasm/wasm_mod.js",
-        "js/wasm/wasm_mod_bg.wasm",
-        "js/worker.js"
+        "js/wasm/sqlite3.wasm",
+        "js/wasm/wasm_mod_bg.wasm"
+        //        "js/worker.js"
       ]
     }
   ]
