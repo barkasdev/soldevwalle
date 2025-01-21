@@ -2,17 +2,20 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import SettingsPage from '../Pages/SettingsPage';
 import WalletPage from '../Pages/WalletPage';
-import Navbar from '../Components/Navbar/Navbar';
+import SignInPage from '../Pages/SignInPage';
+import SendTokens from '../Pages/SendTokens';
 
 const AppRouter: React.FC = () => {
     return (
         <Router>
             <div className="p-4">
-                <Navbar />
+                {/* <Navbar /> */}
 
                 <Routes>
+                    <Route path="/" element={<SignInPage />} />
                     <Route path="/wallet" element={<WalletPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path= "/sendTokens" element={<SendTokens />} />
                 </Routes>
             </div>
         </Router>

@@ -9,6 +9,9 @@ const Navbar: React.FC = () => {
                     <Link to="/">MyApp</Link>
                 </div>
                 <ul className="flex space-x-4">
+                    <li>
+                        <Link className="text-white hover:underline" to="/">Home</Link>
+                    </li>
 
                     <li>
                         <Link className="text-white hover:underline" to="/wallet">Wallet</Link>
@@ -22,4 +25,4 @@ const Navbar: React.FC = () => {
     );
 };
 
-export default Navbar;
+export {Navbar};
