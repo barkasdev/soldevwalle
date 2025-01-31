@@ -6,7 +6,6 @@ const overrideEntry = (config) => {
     background: './src/background',
     content: './src/content',
   }
-
   return config
 }
 
@@ -22,11 +21,4 @@ const overrideOutput = (config) => {
 
 module.exports = {
   webpack: (config) => override(overrideEntry, overrideOutput)(config),
-  
 }
-module.exports = {
-  target: "web", // Ensures Webpack targets the browser environment
-  resolve: {
-    extensions: [".ts", ".tsx", ".js", ".json"],
-  },
-};

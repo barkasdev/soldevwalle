@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "description": "A simple Chrome extension.",
   "icons": {
-    "16": "logo192.png",
-    "48": "logo192.png",
-    "128": "logo192.png"
+    "16": "solanaLogo1.png",
+    "48": "solanaLogo1.png",
+    "128": "solanaLogo1.png"
   },
   "background": {
     "service_worker": "./static/js/background.js"

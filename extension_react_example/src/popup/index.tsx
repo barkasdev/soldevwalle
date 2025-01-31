@@ -3,12 +3,18 @@ import ReactDOM from 'react-dom/client'
 import '../index.css'
 import App from './App/App'
 import reportWebVitals from '../reportWebVitals'
+import Browser from 'webextension-polyfill'
+import { BrowserRouter, HashRouter } from 'react-router-dom'
 
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
+const rootElement = document.getElementById('root') as HTMLElement;
+rootElement.classList.add('container');
+
+const root = ReactDOM.createRoot(rootElement);
+
 root.render(
-  <React.StrictMode>
+  <HashRouter>
     <App />
-  </React.StrictMode>,
+  </HashRouter>,
 )
 
 // If you want to start measuring performance in your app, pass a function

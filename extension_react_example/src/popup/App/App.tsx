@@ -1,45 +1,23 @@
 import React from 'react'
-import '../../index.css'
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
-import HomePage from '../Pages/HomePage'
+import { Routes, Route } from 'react-router-dom'
 import WalletPage from '../Pages/WalletPage'
 import SettingsPage from '../Pages/SettingsPage'
-import initWasmModule, { init_wasm, report_state } from '../../utils/wasm/wasm_mod'
+import SignInPage from '../Pages/SignInPage'
+import SignUpPage from '../Pages/SignUpPage'
+import SendTokens from '../Pages/SendTokens'
+import ReceiveTokens from '../Pages/ReceiveTokens'
 
 const App: React.FC = () => {
-  ;(async () => {
-    await initWasmModule()
-    init_wasm() // this call logs a hello message from WASM for demo purposes
-    // report_state('init')
-  })()
-  const test = () => {
-    console.log('huy')
-  }
-
   return (
-    <div className="h-[450px] w-[300px] bg-gray-100 mx-auto">
-      <Router>
-        <nav className="bg-blue-500 p-4 text-white">
-          <ul className="flex justify-around">
-            <li>
-              <button onClick={() => test()}>Homse</button>
-            </li>
-            <li>
-              <Link to="/wallet">Wallet</Link>
-            </li>
-            <li>
-              <Link to="/settings">Settings</Link>
-            </li>
-          </ul>
-        </nav>
-        <div className="p-4">
-          <Routes>
-            <Route path="/" Component={HomePage} />
-            <Route path="/wallet" Component={WalletPage} />
-            <Route path="/settings" Component={SettingsPage} />
-          </Routes>
-        </div>
-      </Router>
+    <div className="container">
+      <Routes>
+        <Route path="/" element={<SignInPage />} />
+        <Route path="/wallet" element={<WalletPage />} />
+        <Route path= "/sendTokens" element={<SendTokens />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/signUp" element={<SignUpPage />} />
+        <Route path="/receiveTokens" element={<ReceiveTokens />} />
+      </Routes>
     </div>
   )
 }
