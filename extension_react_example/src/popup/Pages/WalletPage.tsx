@@ -1,6 +1,7 @@
 import React from 'react'
 import { FaSearch, FaBars, FaHome, FaClock, FaUser } from 'react-icons/fa'
 import AccountDropdown from '../Components/AccountDropdown'
+import SearchBar from '../Components/Searchbar'
 import { Link } from 'react-router-dom'
 
 const WalletPage: React.FC = () => {
@@ -8,9 +9,17 @@ const WalletPage: React.FC = () => {
         <div className="container flex flex-col items-center text-white p-4">
             {/* Header */}
             <div className="w-full fixed top-0 left-0 p-4 flex justify-between items-center z-10">
-                <FaBars className="text-2xl" />
+                {/* Menu Icon with Hover Effect */}
+                <FaBars
+                    className="text-2xl cursor-pointer hover:scale-110 transition-transform"
+                    onClick={() => console.log("Menu clicked")}
+                />
+
+                {/* Account Dropdown */}
                 <AccountDropdown />
-                <FaSearch className="text-2xl" />
+
+                {/* Search Bar Component */}
+                <SearchBar />
             </div>
 
             {/* Balance */}
