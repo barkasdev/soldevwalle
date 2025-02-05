@@ -21,18 +21,18 @@ const WalletPage: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-3 mt-4">
-            <Link to="/receiveTokens">
-                <button className="flex flex-col items-center px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 shadow-md 
+                <Link to="/receiveTokens">
+                    <button className="flex flex-col items-center px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 shadow-md 
                      hover:from-yellow-500 hover:to-orange-600 hover:scale-105 transition-transform duration-200">
-                    <span className="text-sm font-bold">Receive</span>
-                </button>
-            </Link>
-            <Link to="/sendTokens">
-                <button className="flex flex-col items-center px-4 py-2 rounded-lg bg-gradient-to-r from-red-400 to-pink-500 shadow-md 
+                        <span className="text-sm font-bold">Receive</span>
+                    </button>
+                </Link>
+                <Link to="/sendTokens">
+                    <button className="flex flex-col items-center px-4 py-2 rounded-lg bg-gradient-to-r from-red-400 to-pink-500 shadow-md 
                      hover:from-red-500 hover:to-pink-600 hover:scale-105 transition-transform duration-200">
-                    <span className="text-sm font-bold">Send</span>
-                </button>
-            </Link>
+                        <span className="text-sm font-bold">Send</span>
+                    </button>
+                </Link>
                 <button className="flex flex-col items-center px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 shadow-md 
                      hover:from-orange-600 hover:to-red-600 hover:scale-105 transition-transform duration-200">
                     <span className="text-sm font-bold">Drop</span>
@@ -77,10 +77,20 @@ const WalletPage: React.FC = () => {
 
             {/* Footer Navigation */}
             <div className="w-full absolute bottom-0 bg-white/10 py-2 flex justify-around items-center">
-                <FaHome className="text-lg text-orange-400" />
-                <FaClock className="text-lg text-gray-400" />
-                <FaUser className="text-lg text-gray-400" />
+                <FaHome
+                    className="text-lg text-orange-400 cursor-pointer hover:scale-110 transition-transform"
+                    onClick={() => console.log("Home clicked")}
+                />
+                <FaClock
+                    className="text-lg text-gray-400 cursor-pointer hover:text-orange-400 hover:scale-110 transition-transform"
+                    onClick={() => console.log("History clicked")}
+                />
+                <FaUser
+                    className="text-lg text-gray-400 cursor-pointer hover:text-orange-400 hover:scale-110 transition-transform"
+                    onClick={() => console.log("Profile clicked")}
+                />
             </div>
+
         </div>
     )
 }
