@@ -23,8 +23,12 @@ pub async fn get_networks() -> Vec<MyNetwork> {
         .unwrap_or(Vec::new())
 }
 
-pub async fn create_wallet() -> Result<JsValue, Error> {
-    let client = SolanaRpcClient::new(DEVNET);
+pub async fn create_wallet() -> ClientResult<JsValue> {
+    let network_name = get_active_network().await.map(|n| n.address);
+    if let None = network_name {
+        return Err(ClientError::Other("Can't get active network".to_string()));
+    } 
+    let client = SolanaRpcClient::new(network_name.unwrap().as_str());
     let keypair = Keypair::new();
     log(format!("{}", keypair.pubkey().to_string()).as_str());
     // keypair.pubkey(), keypair.secret()
@@ -44,7 +48,11 @@ pub async fn get_wallets() -> Vec<MyWallet> {
         .unwrap_or(Vec::new());
     for wallet in wallets.iter_mut() {
         //get account balance
-        wallet.account_info = Some(get_balance(&wallet.pubkey.as_str()).await);
+        wallet.account_info = Some(
+            get_balance(&wallet.pubkey.as_str())
+                .await
+                .unwrap_or_default(),
+        );
     }
     wallets
 }
@@ -63,7 +71,8 @@ pub async fn get_active_network() -> Option<MyNetwork> {
 }
 
 pub async fn get_account_info(for_pubkey: &str) -> String {
-    let client = SolanaRpcClient::new(DEVNET); // FIXME active network
+    let network_name = get_active_network().await.map(|n| n.address);
+    let client = SolanaRpcClient::new(network_name.unwrap().as_str()); // FIXME
 
     let address = Pubkey::from_str(for_pubkey).unwrap();
     // log("requesting airdrop");
@@ -76,14 +85,19 @@ pub async fn get_account_info(for_pubkey: &str) -> String {
     format!("{account:#?}") // FIXME
 }
 
-pub async fn get_balance(for_pubkey: &str) -> MyBalance {
-    let client = SolanaRpcClient::new(DEVNET);
-    let address = Pubkey::from_str(for_pubkey).unwrap();
-    let balance = client.get_balance(&address).await;
-    let tokens = client.get_token_account_balance(&address).await;
-    MyBalance {
-        balance: balance.ok(),
-        tokens: tokens.ok(),
+pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
+    let network_name = get_active_network().await.map(|n| n.address);
+    if let Some(network) = network_name {
+        let client = SolanaRpcClient::new(network.as_str());
+        let address = Pubkey::from_str(for_pubkey).unwrap();
+        let balance = client.get_balance(&address).await?;
+        let tokens = client.get_token_account_balance(&address).await?;
+        Ok(MyBalance {
+            balance: Some(balance),
+            tokens: Some(tokens),
+        })
+    } else {
+        Err(ClientError::Other("Can't get active network".to_string()))
     }
 }
 
@@ -97,7 +111,11 @@ pub async fn send_sol(
     let wallet = wallets.iter().filter(|n| n.pubkey.eq(from_pubkey)).next();
     if let Some(wallet) = wallet {
         let from_keypair = Keypair::from_base58_string(wallet.keypair.as_str());
-        let client = SolanaRpcClient::new(DEVNET);
+        let network_name = get_active_network().await.map(|n| n.address);
+        if let None = network_name {
+            return Err(ClientError::Other("Can't get active network".to_string()));
+        }
+        let client = SolanaRpcClient::new(network_name.unwrap().as_str());
         let latest_blockhash = client.get_latest_blockhash().await?;
         let to_pubkey = Pubkey::from_str(to_pubkey).unwrap();
         let tx =
@@ -112,10 +130,16 @@ pub async fn send_sol(
 }
 
 pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult<Signature> {
-    let client = SolanaRpcClient::new(DEVNET);
+    let network_name = get_active_network().await.map(|n| n.address);
+    if let None = network_name {
+        return Err(ClientError::Other("Can't get active network".to_string()));
+    }
+    let client = SolanaRpcClient::new(network_name.unwrap().as_str());
     let address = Pubkey::from_str(to_pubkey);
     if let Ok(address) = address {
-        client.request_airdrop(&address, sol_to_lamports(sol_quantity)).await
+        client
+            .request_airdrop(&address, sol_to_lamports(sol_quantity))
+            .await
     } else {
         Err(ClientError::Other("Can't find address".to_string()))
     }

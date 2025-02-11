@@ -1,14 +1,11 @@
 use serde::{Deserialize, Serialize};
-use solana_sdk::signature::Keypair;
 use wasm_client_solana::solana_account_decoder::parse_token::UiTokenAmount;
-use wasm_bindgen::prelude::*;
-
 
 /// Use this response type to discard the response payload
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IgnoredData {}
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct MyBalance {
     pub balance: Option<u64>,
     pub tokens: Option<UiTokenAmount>,

@@ -9,6 +9,7 @@ use serde::Serialize;
 use serde_json::Value;
 use serde_wasm_bindgen::Serializer;
 use wasm_bindgen::JsValue;
+use wasm_client_solana::{ClientError, ClientResult};
 use wasm_client_solana::prelude::Wallet;
 
 pub async fn test_create_idb() -> Result<String, String> {
@@ -26,9 +27,9 @@ pub async fn test_create_idb() -> Result<String, String> {
     // // Ok(db.store_names().join(","))
 }
 
-pub async fn open_database() -> Result<Database, Error> {
-    let factory = Factory::new()?;
-    factory.open("soldevwalle", None).unwrap().await
+pub async fn open_database() -> ClientResult<Database> {
+    let factory = Factory::new().map_err(|e| ClientError::Other(e.to_string()))?;
+    factory.open("soldevwalle", None).unwrap().await.map_err(|e| ClientError::Other(e.to_string()))
 }
 pub async fn create_database() -> Result<Database, Error> {
     // Get a factory instance from global scope
@@ -134,17 +135,17 @@ where
     serde_wasm_bindgen::from_value(db_data.to_owned()).ok()
 }
 
-pub(crate) async fn get_all_store_objects<O>(store_name: &str) -> Result<Vec<O>, Error>
+pub(crate) async fn get_all_store_objects<O>(store_name: &str) -> ClientResult<Vec<O>>
 where
     O: DeserializeOwned,
 {
     // let database = create_database().await?;
     let database = open_database().await?;
-    let transaction = database.transaction(&[store_name], TransactionMode::ReadOnly)?;
-    let store = transaction.object_store(store_name)?;
-    let store_request = store.get_all(None, None)?;
+    let transaction = database.transaction(&[store_name], TransactionMode::ReadOnly).map_err(|e| ClientError::Other(e.to_string()))?;
+    let store = transaction.object_store(store_name).map_err(|e| ClientError::Other(e.to_string()))?;
+    let store_request = store.get_all(None, None).map_err(|e| ClientError::Other(e.to_string()))?;
     Ok(store_request
-        .await?
+        .await.map_err(|e| ClientError::Other(e.to_string()))?
         .iter()
         .flat_map(|r| parse_object::<O>(r))
         .collect::<Vec<O>>())
@@ -154,31 +155,31 @@ pub(crate) async fn get_store_object<O>(
     store_name: &str,
     index_name: &str,
     query: Query,
-) -> Result<Option<O>, Error>
+) -> ClientResult<Option<O>>
 where
     O: DeserializeOwned,
 {
     let database = open_database().await?;
-    let transaction = database.transaction(&[store_name], TransactionMode::ReadOnly)?;
-    let store = transaction.object_store(store_name)?;
-    let index = store.index(index_name)?;
+    let transaction = database.transaction(&[store_name], TransactionMode::ReadOnly).map_err(|e| ClientError::Other(e.to_string()))?;
+    let store = transaction.object_store(store_name).map_err(|e| ClientError::Other(e.to_string()))?;
+    let index = store.index(index_name).map_err(|e| ClientError::Other(e.to_string()))?;
     
-    let store_request = index.get(JsValue::from("true"));
+    let store_request = index.get(query);
     log(format!("!!!!!{:#?}", store_request).as_str());
-    Ok(store_request?
-        .await?
+    Ok(store_request.map_err(|e| ClientError::Other(e.to_string()))?
+        .await.map_err(|e| ClientError::Other(e.to_string()))?
         .map(|r| parse_object::<O>(&r))
         .flatten())
 }
 
-pub async fn add_object<O>(store_name: &str, entity: O) -> Result<JsValue, Error>
+pub async fn add_object<O>(store_name: &str, entity: O) -> ClientResult<JsValue>
 where
     O: Serialize,
 {
     // let database = create_database().await?;
     let database = open_database().await?;
-    let transaction = database.transaction(&[store_name], TransactionMode::ReadWrite)?;
-    let store = transaction.object_store(store_name)?;
+    let transaction = database.transaction(&[store_name], TransactionMode::ReadWrite).map_err(|e| ClientError::Other(e.to_string()))?;
+    let store = transaction.object_store(store_name).map_err(|e| ClientError::Other(e.to_string()))?;
     let serialized_value = serde_wasm_bindgen::to_value(&entity)
         // .map_err(|e| idb::Error::UnexpectedJsType(&e.to_string(), &entity))
         .unwrap();
@@ -189,8 +190,8 @@ where
             None,
         )
         .unwrap()
-        .await?;
-    transaction.commit()?.await?;
+        .await.map_err(|e| ClientError::Other(e.to_string()))?;
+    transaction.commit().map_err(|e| ClientError::Other(e.to_string()))?.await.map_err(|e| ClientError::Other(e.to_string()))?;
 
     Ok(id)
 }
@@ -199,29 +200,29 @@ pub async fn update_object<O>(
     store_name: &str,
     entity: O,
     key: Option<&JsValue>,
-) -> Result<JsValue, Error>
+) -> ClientResult<JsValue>
 where
     O: Serialize,
 {
     // let database = create_database().await?;
-    let database = open_database().await?;
-    let transaction = database.transaction(&[store_name], TransactionMode::ReadWrite)?;
-    let store = transaction.object_store(store_name)?;
+    let database = open_database().await.map_err(|e| ClientError::Other(e.to_string()))?;
+    let transaction = database.transaction(&[store_name], TransactionMode::ReadWrite).map_err(|e| ClientError::Other(e.to_string()))?;
+    let store = transaction.object_store(store_name).map_err(|e| ClientError::Other(e.to_string()))?;
     let serialized_value = serde_wasm_bindgen::to_value(&entity)
         // .map_err(|e| idb::Error::UnexpectedJsType(&e.to_string(), &entity))
         .unwrap();
-    let id = store.put(&serialized_value, key).unwrap().await?;
-    transaction.commit()?.await?;
+    let id = store.put(&serialized_value, key).unwrap().await.map_err(|e| ClientError::Other(e.to_string()))?;
+    transaction.commit().map_err(|e| ClientError::Other(e.to_string()))?.await.map_err(|e| ClientError::Other(e.to_string()))?;
 
     Ok(id)
 }
 
-async fn add_data(database: &Database) -> Result<JsValue, Error> {
+async fn add_data(database: &Database) -> ClientResult<JsValue> {
     // Create a read-write transaction
-    let transaction = database.transaction(&["employees"], TransactionMode::ReadWrite)?;
+    let transaction = database.transaction(&["employees"], TransactionMode::ReadWrite).map_err(|e| ClientError::Other(e.to_string()))?;
 
     // Get the object store
-    let store = transaction.object_store("employees")?;
+    let store = transaction.object_store("employees").map_err(|e| ClientError::Other(e.to_string()))?;
 
     // Prepare data to add
     let employee = serde_json::json!({
@@ -236,32 +237,32 @@ async fn add_data(database: &Database) -> Result<JsValue, Error> {
             None,
         )
         .unwrap()
-        .await?;
+        .await.map_err(|e| ClientError::Other(e.to_string()))?;
 
     // Commit the transaction
-    transaction.commit()?.await?;
+    transaction.commit().map_err(|e| ClientError::Other(e.to_string()))?.await.map_err(|e| ClientError::Other(e.to_string()))?;
 
     Ok(id)
 }
 
-async fn get_data(database: &Database, id: JsValue) -> Result<Option<Value>, Error> {
+async fn get_data(database: &Database, id: JsValue) -> ClientResult<Option<Value>> {
     // Create a read-only transaction
     let transaction = database
         .transaction(&["employees"], TransactionMode::ReadOnly)
         .unwrap();
 
     // Get the object store
-    let store = transaction.object_store("employees")?;
+    let store = transaction.object_store("employees").map_err(|e| ClientError::Other(e.to_string()))?;
 
     // Get the stored data
-    let stored_employee: Option<JsValue> = store.get(id)?.await?;
+    let stored_employee: Option<JsValue> = store.get(id).map_err(|e| ClientError::Other(e.to_string()))?.await.map_err(|e| ClientError::Other(e.to_string()))?;
 
     // Deserialize the stored data
     let stored_employee: Option<Value> = stored_employee
         .map(|stored_employee| serde_wasm_bindgen::from_value(stored_employee).unwrap());
 
     // Wait for the transaction to complete (alternatively, you can also commit the transaction)
-    transaction.await?;
+    transaction.await.map_err(|e| ClientError::Other(e.to_string()))?;
 
     Ok(stored_employee)
 }

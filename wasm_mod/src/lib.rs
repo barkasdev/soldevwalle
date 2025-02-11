@@ -12,7 +12,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_client_solana::{SolanaRpcClient, DEVNET};
 use web_sys::{Window, WorkerGlobalScope};
-use crate::models::MyNetwork;
 
 /// Contains the right type of the browser runtime for the current browser
 pub(crate) enum BrowserRuntime {
@@ -123,11 +122,10 @@ pub async fn init_wasm() {
 
     let _networks = get_networks().await;
     // log(format!("{:#?}", networks).as_str());
-    
+
     let _wallets = get_wallets().await;
     // log(format!("{:#?}", wallets).as_str());
 
-    let _wallet = get_active_network().await;
     log("init WASM!");
 }
 
@@ -171,17 +169,23 @@ pub async fn get_wallets() {
     report_progress(&*serde_json::to_string_pretty(&wallets).unwrap());
 }
 
-#[wasm_bindgen]
-pub async fn get_active_network() {
-    let network = client::get_active_network().await;
-    // log(format!("get_active_network: {:#?}", network).as_str());
-    report_progress(&*serde_json::to_string_pretty(&network).unwrap());
-}
+// #[wasm_bindgen]
+// pub async fn get_active_network() {
+//     let network = client::get_active_network().await;
+//     // log(format!("get_active_network: {:#?}", network).as_str());
+//     report_progress(&*serde_json::to_string_pretty(&network).unwrap());
+// }
 
 #[wasm_bindgen]
 pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
     let airdrop = client::request_airdrop(to_pubkey, sol_quantity).await;
     report_progress(&*serde_json::to_string_pretty(&airdrop).unwrap());
+}
+
+#[wasm_bindgen]
+pub async fn send_sol(from_pubkey: &str, to_pubkey: &str, lamports: u64) {
+    let send_result = client::send_sol(from_pubkey, to_pubkey, lamports).await;
+    report_progress(&*serde_json::to_string_pretty(&send_result).unwrap());
 }
 
 /// This is a proxy for report_progress() in progress.js
