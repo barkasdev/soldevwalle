@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_client_solana::solana_account_decoder::parse_token::UiTokenAmount;
 
 /// Use this response type to discard the response payload

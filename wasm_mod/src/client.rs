@@ -6,7 +6,6 @@ use crate::models::{MyBalance, MyNetwork, MyWallet};
 //     report_progress,
 // };
 use crate::{db, log};
-use idb::Error;
 use solana_sdk::native_token::sol_to_lamports;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature};
@@ -14,7 +13,7 @@ use solana_sdk::signer::Signer;
 use solana_sdk::system_transaction;
 use std::str::FromStr;
 use wasm_bindgen::JsValue;
-use wasm_client_solana::{ClientError, ClientResult, SolanaRpcClient, DEVNET};
+use wasm_client_solana::{ClientError, ClientResult, SolanaRpcClient};
 // here go functions to export
 
 pub async fn get_networks() -> Vec<MyNetwork> {
@@ -27,7 +26,7 @@ pub async fn create_wallet() -> ClientResult<JsValue> {
     let network_name = get_active_network().await.map(|n| n.address);
     if let None = network_name {
         return Err(ClientError::Other("Can't get active network".to_string()));
-    } 
+    }
     let client = SolanaRpcClient::new(network_name.unwrap().as_str());
     let keypair = Keypair::new();
     log(format!("{}", keypair.pubkey().to_string()).as_str());
@@ -106,7 +105,6 @@ pub async fn send_sol(
     to_pubkey: &str,
     lamports: u64,
 ) -> ClientResult<Signature> {
-    //TODO find keypair in my wallets
     let wallets = get_wallets().await;
     let wallet = wallets.iter().filter(|n| n.pubkey.eq(from_pubkey)).next();
     if let Some(wallet) = wallet {
