@@ -2,18 +2,17 @@
 mod client;
 mod api_wrappers;
 mod constants;
+mod db;
 mod models;
 
 use constants::log;
 use solana_sdk::pubkey;
-use sqlite_wasm_rs::{c as ffi, init_sqlite, libsqlite3, sqlite};
-use sqlite_wasm_rs::libsqlite3::*;
 use std::ffi::CString;
-use sqlite_wasm_rs::c::SQLITE_OK;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_client_solana::{SolanaRpcClient, DEVNET};
 use web_sys::{Window, WorkerGlobalScope};
+use crate::models::MyNetwork;
 
 /// Contains the right type of the browser runtime for the current browser
 pub(crate) enum BrowserRuntime {
@@ -26,6 +25,46 @@ pub(crate) enum BrowserRuntime {
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+// #[wasm_bindgen]
+// impl IndexedDb {
+//     #[wasm_bindgen(constructor)]
+//     pub async fn new() -> std::result::Result<IndexedDb, JsValue> {
+//         let window = window().ok_or("No window available")?;
+//         let indexed_db = window.indexed_db()?.ok_or("IndexedDB not available")?;
+//         let request = indexed_db.open("my_database")?;
+//
+//         // Wait for the database to open
+//         // let db = JsFuture::from(request.result().clone()).await?;
+//         // let db: IdbDatabase = db.dyn_into().unwrap();
+//
+//         // Create object store if needed
+//         // if request.ready_state() == IdbRequestReadyState::Pending {
+//         //     let event = request.upgrade_needed_event().unwrap();
+//         //     let db: IdbDatabase = event.target().unwrap().dyn_into().unwrap();
+//         //     db.create_object_store("users")?;
+//         // }
+//
+//         //FIXME
+//         let db = request
+//         Ok(IndexedDb { db })
+//     }
+//
+//     pub async fn insert_user(&self, id: u32, name: String) -> std::result::Result<(), JsValue> {
+//         let tx = self.db.transaction_with_str("users" /*, IdbTransactionMode::Readwrite*/)?;
+//         let store = tx.object_store("users")?;
+//         store.put_with_key(&JsValue::from_str(&name), &JsValue::from_f64(id as f64))?;
+//         Ok(())
+//     }
+//
+//     pub async fn get_user(&self, id: u32) -> std::result::Result<JsValue, JsValue> {
+//         let tx = self.db.transaction_with_str("users" /*, IdbTransactionMode::Readonly*/)?;
+//         let store = tx.object_store("users")?;
+//         let request = store.get(&JsValue::from_f64(id as f64))?;
+//         let result = JsFuture::from(request).await?;
+//         Ok(result)
+//     }
+// }
 
 /// Makes JS `console.log` available in Rust
 #[wasm_bindgen]
@@ -40,7 +79,6 @@ extern "C" {
     pub fn initSqlite3() -> js_sys::Promise;
 }
 
-
 fn cstr(s: &str) -> CString {
     CString::new(s).unwrap()
 }
@@ -48,56 +86,31 @@ fn cstr(s: &str) -> CString {
 /// A demo function to test if WASM is callable from background.js
 #[wasm_bindgen]
 pub async fn init_wasm() {
-    //sqlite
-    let sqlite_init = ffi::init_sqlite().await;
-    if sqlite_init.is_err() {
-        //FIXME guard
-        log("Failed to initialize sqlite database");
-        return;
+    log("testing idb");
+    let idb_res = db::test_create_idb().await;
+    match idb_res {
+        Ok(idb) => {
+            log(&format!("idb success: {}", &idb));
+        }
+        Err(err) => {
+            log(&format!("idb err: {}", &err));
+        }
     }
-    let mut db = std::ptr::null_mut();
-    let filename = CString::new("soldevwalle.db").unwrap();
-    // let filename = CString::new("memory:soldevwalle.db").unwrap();
-    // See <https://sqlite.org/wasm/doc/trunk/persistence.md#opfs>
-    let vfs = CString::new("opfs").unwrap();
-    let ret = unsafe {
-        ffi::sqlite3_open_v2(
-            filename.as_ptr(),
-            &mut db as *mut _,
-            ffi::SQLITE_OPEN_READWRITE | ffi::SQLITE_OPEN_CREATE,
-            // Using std::ptr::null() is a memory DB
-            std::ptr::null(),
-            // vfs.as_ptr(),
-        )
-    };
-    if ret == ffi::SQLITE_OK {
-        log("sqlite initialized");
-    } else {
-        log("failed to initialize sqlite db");
-    }
-    let errmsg = std::ptr::null_mut();
-    // let sql = cstr("DROP TABLE COMPANY;");
-    // let ret = unsafe { ffi::sqlite3_exec(db, sql.as_ptr(), None, std::ptr::null_mut(), errmsg) };
-    // log(format!("sqlite exec returned: {}", &ret).as_str());
-    let sql = cstr(
-        "CREATE TABLE IF NOT EXISTS COMPANY(
-                        NAME           TEXT    NOT NULL );",
-    );
-    
-    let ret = unsafe { ffi::sqlite3_exec(db, sql.as_ptr(), None, std::ptr::null_mut(), errmsg) };
-    log(format!("sqlite exec returned: {}", &ret).as_str());
-    
-    let sql = cstr(
-        "INSERT INTO COMPANY(\
-        NAME) VALUES (\
-        \"John Doe\") ON CONFLICT DO NOTHING \
-        "
-    );
-    
-    let ret = unsafe { ffi::sqlite3_exec(db, sql.as_ptr(), None, std::ptr::null_mut(), errmsg) };
-    log(format!("sqlite insert into company returned: {}", &ret).as_str());
-    // SQLITE_OK
-    //
+    log("done");
+
+    client::seed_temp_data().await;
+    // let db = db::create_database().await;
+    // match db {
+    //     Ok(db) => {
+    //         if let Err(db_err) = db::try_seed_data(&db).await {
+    //             log(&format!("error seeding: {}", db_err));
+    //         }
+    //     }
+    //     Err(db_err) => {
+    //         log(&format!("error creating database: {}", db_err));
+    //     }
+    // }
+
     let client = SolanaRpcClient::new(DEVNET);
     let address = pubkey!("GDX3G2D84Mj99XGMkVrp9vsHUHTzzuW7uh5tHrpehKbQ");
     // log("requesting airdrop");
@@ -106,9 +119,16 @@ pub async fn init_wasm() {
     //     .await.unwrap();
     let account = client.get_account(&address).await;
     // let drop = client.request_airdrop(&address, sol_to_lamports(1.0)).await;
-    log("init WASM!");
     log(format!("{account:#?}").as_str());
-    log("huy!");
+
+    let _networks = get_networks().await;
+    // log(format!("{:#?}", networks).as_str());
+    
+    let _wallets = get_wallets().await;
+    // log(format!("{:#?}", wallets).as_str());
+
+    let _wallet = get_active_network().await;
+    log("init WASM!");
 }
 
 /// The main entry point callable from `background.js`.
@@ -133,6 +153,35 @@ pub async fn report_state(msg: &str) {
         "(from lib.rs) submitting the state data for {}",
         msg
     ))
+}
+
+//get list of networks
+#[wasm_bindgen]
+pub async fn get_networks() {
+    //TODO implement switching active network and updating in db
+    let networks = client::get_networks().await;
+    // log(format!("get_networks: {:#?}", networks).as_str());
+    report_progress(&*serde_json::to_string_pretty(&networks).unwrap());
+}
+
+#[wasm_bindgen]
+pub async fn get_wallets() {
+    let wallets = client::get_wallets().await;
+    // log(format!("get_wallets: {:#?}", wallets).as_str());
+    report_progress(&*serde_json::to_string_pretty(&wallets).unwrap());
+}
+
+#[wasm_bindgen]
+pub async fn get_active_network() {
+    let network = client::get_active_network().await;
+    // log(format!("get_active_network: {:#?}", network).as_str());
+    report_progress(&*serde_json::to_string_pretty(&network).unwrap());
+}
+
+#[wasm_bindgen]
+pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
+    let airdrop = client::request_airdrop(to_pubkey, sol_quantity).await;
+    report_progress(&*serde_json::to_string_pretty(&airdrop).unwrap());
 }
 
 /// This is a proxy for report_progress() in progress.js

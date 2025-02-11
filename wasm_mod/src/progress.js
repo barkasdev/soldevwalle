@@ -25,4 +25,5 @@ export function report_progress(msg) {
   // we have to handle errors gracefully because if the sending fails,
   // it brings down the entire thread and the WASM dies
   chrome.runtime.sendMessage(msg).then(handleResponse, handleError);
+  console.log("reported progress to events: ", msg);
 }

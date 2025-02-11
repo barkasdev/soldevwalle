@@ -32,25 +32,20 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 # compared to the default allocator's ~10K. It is slower than the default
 # allocator, however.
 #wee_alloc = { version = "0.4.5", optional = true }
-wasm_client_solana = "0.7.3"
-solana-sdk = "2.1.7"
-sqlite-wasm-rs = "0.1.0"
-sqlite-web = "0.0.1"
-#sqlite-web = { git = "https://github.com/xmtp/sqlite-web-rs", branch = "main" }
+wasm_client_solana = { version = "0.7.5", features = ["js"] }
+solana-sdk = "2.1.13"
+spl-token = "7.0.0"
+anyhow = "1.0.95"
+#deli = { version = "0.2.0", features = ["derive"] }
+idb = "0.6.4"
 
 [dependencies.web-sys]
 version = "0.3"
-features = [
-    "console",
-    "WorkerGlobalScope",
-    "Window",
-    'Headers',
-    'Request',
-    'RequestInit',
-    'RequestMode',
-    'Response',
-    'FileSystem',
-]
+features = ["console", "WorkerGlobalScope", "Window", "Headers", "Request", "RequestInit", "RequestMode",
+    "Response", "FileSystem", "Navigator", "StorageManager", "Storage", "FileSystemDirectoryHandle", "FileSystemFileHandle",
+    "FileSystemWritableFileStream", "IdbFactory", "IdbDatabase", "IdbObjectStore", "IdbTransaction",
+    "IdbRequest", "IdbOpenDbRequest", "IdbCursor", "IdbCursorWithValue",
+    "IdbKeyRange", ]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
