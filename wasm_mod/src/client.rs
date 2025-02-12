@@ -13,6 +13,7 @@ use solana_sdk::signer::Signer;
 use solana_sdk::system_transaction;
 use std::str::FromStr;
 use wasm_bindgen::JsValue;
+use wasm_client_solana::prelude::{FutureExt, TryFutureExt};
 use wasm_client_solana::{ClientError, ClientResult, SolanaRpcClient};
 // here go functions to export
 
@@ -21,9 +22,15 @@ pub async fn get_networks() -> Vec<MyNetwork> {
         .await
         .unwrap_or(Vec::new())
 }
+pub async fn get_networks_async() -> Result<JsValue, JsValue> {
+    db::get_all_store_objects::<MyNetwork>("networks")
+        .await
+        .map(|v| serde_wasm_bindgen::to_value(&v).unwrap())
+        .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+}
 
 pub async fn create_wallet() -> ClientResult<JsValue> {
-    let network_name = get_active_network().await.map(|n| n.address);
+    let network_name = get_active_network().await.map(|n| n.address());
     if let None = network_name {
         return Err(ClientError::Other("Can't get active network".to_string()));
     }
@@ -70,7 +77,7 @@ pub async fn get_active_network() -> Option<MyNetwork> {
 }
 
 pub async fn get_account_info(for_pubkey: &str) -> String {
-    let network_name = get_active_network().await.map(|n| n.address);
+    let network_name = get_active_network().await.map(|n| n.address());
     let client = SolanaRpcClient::new(network_name.unwrap().as_str()); // FIXME
 
     let address = Pubkey::from_str(for_pubkey).unwrap();
@@ -85,7 +92,7 @@ pub async fn get_account_info(for_pubkey: &str) -> String {
 }
 
 pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
-    let network_name = get_active_network().await.map(|n| n.address);
+    let network_name = get_active_network().await.map(|n| n.address());
     if let Some(network) = network_name {
         let client = SolanaRpcClient::new(network.as_str());
         let address = Pubkey::from_str(for_pubkey).unwrap();
@@ -109,7 +116,7 @@ pub async fn send_sol(
     let wallet = wallets.iter().filter(|n| n.pubkey.eq(from_pubkey)).next();
     if let Some(wallet) = wallet {
         let from_keypair = Keypair::from_base58_string(wallet.keypair.as_str());
-        let network_name = get_active_network().await.map(|n| n.address);
+        let network_name = get_active_network().await.map(|n| n.address());
         if let None = network_name {
             return Err(ClientError::Other("Can't get active network".to_string()));
         }
@@ -128,7 +135,7 @@ pub async fn send_sol(
 }
 
 pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult<Signature> {
-    let network_name = get_active_network().await.map(|n| n.address);
+    let network_name = get_active_network().await.map(|n| n.address());
     if let None = network_name {
         return Err(ClientError::Other("Can't get active network".to_string()));
     }

@@ -89,31 +89,31 @@ pub async fn create_database() -> Result<Database, Error> {
 
 pub async fn try_seed_data(db: &Database) -> Result<(), Error> {
     let hardcoded_networks = vec![
-        MyNetwork {
-            name: String::from("DEVNET"),
-            address: String::from("https://api.devnet.solana.com"),
-            active: true,
-        },
-        MyNetwork {
-            name: String::from("TESTNET"),
-            address: String::from("https://api.devnet.solana.com"),
-            active: false,
-        },
-        MyNetwork {
-            name: String::from("MAINNET"),
-            address: String::from("https://api.devnet.solana.com"),
-            active: false,
-        },
-        MyNetwork {
-            name: String::from("LOCALNET"),
-            address: String::from("https://api.devnet.solana.com"),
-            active: false,
-        },
-        MyNetwork {
-            name: String::from("DEBUG"),
-            address: String::from("https://api.devnet.solana.com"),
-            active: false,
-        },
+        MyNetwork::new(
+            String::from("DEVNET"),
+            String::from("https://api.devnet.solana.com"),
+            true,
+        ),
+        MyNetwork::new(
+            String::from("TESTNET"),
+            String::from("https://api.devnet.solana.com"),
+            false,
+        ),
+        MyNetwork::new(
+            String::from("MAINNET"),
+            String::from("https://api.devnet.solana.com"),
+            false,
+        ),
+        MyNetwork::new(
+            String::from("LOCALNET"),
+            String::from("https://api.devnet.solana.com"),
+            false,
+        ),
+        MyNetwork::new(
+            String::from("DEBUG"),
+            String::from("https://api.devnet.solana.com"),
+            false,
+        ),
     ];
     for network in &hardcoded_networks {
         let store_name = "networks";

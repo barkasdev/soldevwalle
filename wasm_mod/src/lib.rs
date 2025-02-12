@@ -5,11 +5,15 @@ mod constants;
 mod db;
 mod models;
 
+use crate::models::MyNetwork;
 use constants::log;
+use js_sys::Promise;
 use solana_sdk::pubkey;
 use std::ffi::CString;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
+use wasm_client_solana::prelude::{FutureExt, TryStreamExt};
 use wasm_client_solana::{SolanaRpcClient, DEVNET};
 use web_sys::{Window, WorkerGlobalScope};
 
@@ -160,6 +164,15 @@ pub async fn get_networks() {
     let networks = client::get_networks().await;
     // log(format!("get_networks: {:#?}", networks).as_str());
     report_progress(&*serde_json::to_string_pretty(&networks).unwrap());
+}
+#[wasm_bindgen]
+pub async fn get_networks_sync() -> Vec<MyNetwork> {
+    client::get_networks().await
+}
+
+#[wasm_bindgen]
+pub async fn get_networks_async() -> Promise {
+    future_to_promise(client::get_networks_async())
 }
 
 #[wasm_bindgen]

@@ -234,6 +234,22 @@ export function get_networks() {
 }
 
 /**
+ * @returns {Promise<MyNetwork[]>}
+ */
+export function get_networks_sync() {
+    const ret = wasm.get_networks_sync();
+    return ret;
+}
+
+/**
+ * @returns {Promise<Promise<any>>}
+ */
+export function get_networks_async() {
+    const ret = wasm.get_networks_async();
+    return ret;
+}
+
+/**
  * @returns {Promise<void>}
  */
 export function get_wallets() {
@@ -302,32 +318,32 @@ function passArrayJsValueToWasm0(array, malloc) {
     WASM_VECTOR_LEN = array.length;
     return ptr;
 }
-function __wbg_adapter_54(arg0, arg1, arg2) {
+function __wbg_adapter_58(arg0, arg1, arg2) {
     wasm.closure111_externref_shim(arg0, arg1, arg2);
 }
 
-function __wbg_adapter_57(arg0, arg1) {
+function __wbg_adapter_61(arg0, arg1, arg2) {
+    wasm.closure165_externref_shim(arg0, arg1, arg2);
+}
+
+function __wbg_adapter_64(arg0, arg1) {
     wasm._dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h036f4ab3e47933b4(arg0, arg1);
 }
 
-function __wbg_adapter_60(arg0, arg1, arg2) {
-    wasm.closure201_externref_shim(arg0, arg1, arg2);
+function __wbg_adapter_67(arg0, arg1, arg2) {
+    wasm.closure255_externref_shim(arg0, arg1, arg2);
 }
 
-function __wbg_adapter_63(arg0, arg1) {
+function __wbg_adapter_70(arg0, arg1) {
     wasm._dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h7712d6c4387528c0(arg0, arg1);
 }
 
-function __wbg_adapter_70(arg0, arg1, arg2) {
-    wasm.closure225_externref_shim(arg0, arg1, arg2);
+function __wbg_adapter_77(arg0, arg1, arg2) {
+    wasm.closure279_externref_shim(arg0, arg1, arg2);
 }
 
-function __wbg_adapter_73(arg0, arg1, arg2) {
-    wasm.closure441_externref_shim(arg0, arg1, arg2);
-}
-
-function __wbg_adapter_391(arg0, arg1, arg2, arg3) {
-    wasm.closure464_externref_shim(arg0, arg1, arg2, arg3);
+function __wbg_adapter_406(arg0, arg1, arg2, arg3) {
+    wasm.closure473_externref_shim(arg0, arg1, arg2, arg3);
 }
 
 const __wbindgen_enum_BinaryType = ["blob", "arraybuffer"];
@@ -676,6 +692,107 @@ export class Message {
         _assertClass(arg0, Hash);
         var ptr0 = arg0.__destroy_into_raw();
         wasm.__wbg_set_message_recent_blockhash(this.__wbg_ptr, ptr0);
+    }
+}
+
+const MyNetworkFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_mynetwork_free(ptr >>> 0, 1));
+
+export class MyNetwork {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(MyNetwork.prototype);
+        obj.__wbg_ptr = ptr;
+        MyNetworkFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        MyNetworkFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_mynetwork_free(ptr, 0);
+    }
+    /**
+     * @returns {boolean}
+     */
+    get active() {
+        const ret = wasm.__wbg_get_mynetwork_active(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * @param {boolean} arg0
+     */
+    set active(arg0) {
+        wasm.__wbg_set_mynetwork_active(this.__wbg_ptr, arg0);
+    }
+    /**
+     * @param {string} name
+     * @param {string} address
+     * @param {boolean} active
+     */
+    constructor(name, address, active) {
+        const ptr0 = passStringToWasm0(name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(address, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.mynetwork_new(ptr0, len0, ptr1, len1, active);
+        this.__wbg_ptr = ret >>> 0;
+        MyNetworkFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * @returns {string}
+     */
+    get name() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.mynetwork_name(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @param {string} name
+     */
+    set name(name) {
+        const ptr0 = passStringToWasm0(name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.mynetwork_set_name(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
+     * @returns {string}
+     */
+    get address() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.mynetwork_address(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @param {string} address
+     */
+    set address(address) {
+        const ptr0 = passStringToWasm0(address, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.mynetwork_set_address(this.__wbg_ptr, ptr0, len0);
     }
 }
 
@@ -1586,6 +1703,10 @@ function __wbg_get_imports() {
         const ret = arg0.msCrypto;
         return ret;
     };
+    imports.wbg.__wbg_mynetwork_new = function(arg0) {
+        const ret = MyNetwork.__wrap(arg0);
+        return ret;
+    };
     imports.wbg.__wbg_name_0b327d569f00ebee = function(arg0) {
         const ret = arg0.name;
         return ret;
@@ -1601,7 +1722,7 @@ function __wbg_get_imports() {
                 const a = state0.a;
                 state0.a = 0;
                 try {
-                    return __wbg_adapter_391(a, state0.b, arg0, arg1);
+                    return __wbg_adapter_406(a, state0.b, arg0, arg1);
                 } finally {
                     state0.a = a;
                 }
@@ -1928,6 +2049,13 @@ function __wbg_get_imports() {
         const ret = arg0.wasClean;
         return ret;
     };
+    imports.wbg.__wbindgen_array_new = function() {
+        const ret = [];
+        return ret;
+    };
+    imports.wbg.__wbindgen_array_push = function(arg0, arg1) {
+        arg0.push(arg1);
+    };
     imports.wbg.__wbindgen_as_number = function(arg0) {
         const ret = +arg0;
         return ret;
@@ -1960,36 +2088,36 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1035 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 167, __wbg_adapter_57);
+    imports.wbg.__wbindgen_closure_wrapper1012 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 166, __wbg_adapter_61);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1147 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 200, __wbg_adapter_60);
+    imports.wbg.__wbindgen_closure_wrapper1332 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 221, __wbg_adapter_64);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1149 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 200, __wbg_adapter_63);
+    imports.wbg.__wbindgen_closure_wrapper1444 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 254, __wbg_adapter_67);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1151 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 200, __wbg_adapter_60);
+    imports.wbg.__wbindgen_closure_wrapper1446 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 254, __wbg_adapter_70);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1153 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 200, __wbg_adapter_60);
+    imports.wbg.__wbindgen_closure_wrapper1448 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 254, __wbg_adapter_67);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper1235 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 226, __wbg_adapter_70);
+    imports.wbg.__wbindgen_closure_wrapper1450 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 254, __wbg_adapter_67);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper2412 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 442, __wbg_adapter_73);
+    imports.wbg.__wbindgen_closure_wrapper1532 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 280, __wbg_adapter_77);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper676 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 112, __wbg_adapter_54);
+    imports.wbg.__wbindgen_closure_wrapper746 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 112, __wbg_adapter_58);
         return ret;
     };
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {

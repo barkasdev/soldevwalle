@@ -25,9 +25,39 @@ pub struct MyNetworks {
     pub networks: Vec<MyNetwork>,
 }
 
+#[wasm_bindgen]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MyNetwork {
-    pub name: String,
-    pub address: String,
+    name: String,
+    address: String,
     pub active: bool,
+}
+
+#[wasm_bindgen]
+impl MyNetwork {
+    #[wasm_bindgen(constructor)]
+    pub fn new(name: String, address: String, active: bool) -> MyNetwork {
+        MyNetwork{
+            name,
+            address,
+            active,
+        }
+    }
+    
+    #[wasm_bindgen(getter)]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[wasm_bindgen(setter)]
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+    #[wasm_bindgen(getter)]
+    pub fn address(&self) -> String {
+        self.address.clone()
+    }
+    #[wasm_bindgen(setter)]
+    pub fn set_address(&mut self, address: String) {
+        self.address = address;
+    }
 }
