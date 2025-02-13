@@ -6,6 +6,7 @@ import SignInPage from '../Pages/SignInPage'
 import SignUpPage from '../Pages/SignUpPage'
 import SendTokens from '../Pages/SendTokens'
 import ReceiveTokens from '../Pages/ReceiveTokens'
+import TransactionHistory from '../Pages/TransactionHistory'
 
 const App: React.FC = () => {
   return (
@@ -17,6 +18,7 @@ const App: React.FC = () => {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/signUp" element={<SignUpPage />} />
         <Route path="/receiveTokens" element={<ReceiveTokens />} />
+        <Route path="/transactionHistory" element={<TransactionHistory />} />
       </Routes>
     </div>
   )

@@ -6,6 +6,7 @@ import SignInPage from '../Pages/SignInPage';
 import SendTokens from '../Pages/SendTokens';
 import SignUpPage from '../Pages/SignUpPage';
 import ReceiveTokens from '../Pages/ReceiveTokens';
+import TransactionHistory from '../Pages/TransactionHistory';
 //import Navbar from '../Components/Navbar/Navbar';
 
 const AppRouter: React.FC = () => {
@@ -19,6 +20,7 @@ const AppRouter: React.FC = () => {
                     <Route path= "/sendTokens" element={<SendTokens />} />
                     <Route path= "/signUp" element={<SignUpPage />} />
                     <Route path= "/receiveTokens" element={<ReceiveTokens />} />
+                    <Route path= "/transactionHistory" element={<TransactionHistory />} />
                 </Routes>
             </div>
         </Router>

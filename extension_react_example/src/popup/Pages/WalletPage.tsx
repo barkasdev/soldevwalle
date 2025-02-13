@@ -90,10 +90,12 @@ const WalletPage: React.FC = () => {
                     className="text-lg text-orange-400 cursor-pointer hover:scale-110 transition-transform"
                     onClick={() => console.log("Home clicked")}
                 />
-                <FaClock
-                    className="text-lg text-gray-400 cursor-pointer hover:text-orange-400 hover:scale-110 transition-transform"
-                    onClick={() => console.log("History clicked")}
-                />
+                <Link to="/transactionHistory">
+                    <FaClock
+                        className="text-lg text-gray-400 cursor-pointer hover:text-orange-400 hover:scale-110 transition-transform"
+                        onClick={() => console.log("History clicked")}
+                    />
+                </Link>
                 <FaUser
                     className="text-lg text-gray-400 cursor-pointer hover:text-orange-400 hover:scale-110 transition-transform"
                     onClick={() => console.log("Profile clicked")}
