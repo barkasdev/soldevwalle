@@ -50,7 +50,14 @@ pub async fn create_database() -> Result<Database, Error> {
             .create_index(
                 "active",
                 KeyPath::new_single("active"),
-                Some(active_index_params),
+                Some(active_index_params.clone()),
+            )
+            .unwrap();
+        networks_store
+            .create_index(
+                "network_name",
+                KeyPath::new_single("name"),
+                Some(active_index_params.clone()),
             )
             .unwrap();
 
@@ -119,6 +126,7 @@ where
 {
     // log(&format!("[parse_object] object: {:?}", db_data));
     // serde_json::from_str::<O>(db_data.as_string().unwrap_or_default().as_str()).ok()
+    
     serde_wasm_bindgen::from_value(db_data.to_owned()).ok()
 }
 

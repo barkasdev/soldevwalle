@@ -27,8 +27,9 @@ pub struct MyNetworks {
 }
 
 #[wasm_bindgen]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct MyNetwork {
+    pub id: i32,
     name: String,
     address: String,
     pub active: bool,
@@ -39,6 +40,7 @@ impl MyNetwork {
     #[wasm_bindgen(constructor)]
     pub fn new(name: String, address: String, active: bool) -> MyNetwork {
         MyNetwork{
+            id: Default::default(),
             name,
             address,
             active,

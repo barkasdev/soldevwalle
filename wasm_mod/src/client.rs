@@ -7,6 +7,7 @@
 use crate::client::crypto_manager::CryptoManager;
 use crate::models::{MyBalance, MyNetwork, MyWallet};
 use crate::{db, log};
+use idb::Query;
 use solana_sdk::native_token::sol_to_lamports;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature};
@@ -82,7 +83,30 @@ pub async fn get_active_network() -> Option<MyNetwork> {
         .find(|n| n.active)
 }
 
-//TODO set_active_network
+pub async fn set_active_network(network_name: String) -> ClientResult<Option<MyNetwork>> {
+    let last_active_network = get_active_network().await;
+    let changing_network = db::get_store_object::<MyNetwork>(
+        "networks",
+        "network_name",
+        Query::Key(JsValue::from_str(&network_name)),
+    )
+    .await?;
+    if last_active_network.is_none() || changing_network.is_none() {
+        Err(ClientError::Other(
+            "Can't get active network or network to be set active".to_string(),
+        ))
+    } else {
+        let mut last_active_network = last_active_network.unwrap();
+        let id = last_active_network.id;
+        last_active_network.active = false;
+        db::update_object("networks", last_active_network, Some(&JsValue::from(id))).await?;
+        let mut changing_network = changing_network.unwrap();
+        changing_network.active = true;
+        let id = changing_network.id;
+        db::update_object("networks", changing_network, Some(&JsValue::from(id))).await?;
+        Ok(get_active_network().await)
+    }
+}
 
 pub async fn get_account_info(for_pubkey: &str) -> String {
     let network_name = get_active_network().await.map(|n| n.address());
@@ -125,7 +149,6 @@ pub async fn send_sol(
     let wallet = wallets.iter().filter(|n| n.pubkey.eq(from_pubkey)).next();
     if let Some(wallet_from_db) = wallet {
         //decrypt
-        let crypto = CryptoManager::new(wallet_store_password.clone());
         let from_keypair = Keypair::from_base58_string(
             CryptoManager::decrypt(wallet_store_password, wallet_from_db.keypair.clone()).as_str(),
         );

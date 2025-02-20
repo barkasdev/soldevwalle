@@ -164,6 +164,12 @@ pub async fn get_networks_async() -> Promise {
 }
 
 #[wasm_bindgen]
+pub async fn set_active_network(name: String) {
+    let res = client::set_active_network(name).await;
+    report_progress(&*serde_json::to_string_pretty(&res).unwrap());
+}
+
+#[wasm_bindgen]
 pub async fn get_wallets() {
     let wallets = client::get_wallets().await;
     // log(format!("get_wallets: {:#?}", wallets).as_str());
