@@ -14,6 +14,7 @@ pub struct MyBalance {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MyWallet {
+    pub name: String,
     pub pubkey: String,
     pub keypair: String,
     #[serde(skip_serializing_if = "Option::is_none")]

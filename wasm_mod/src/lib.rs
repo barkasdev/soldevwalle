@@ -89,18 +89,6 @@ fn cstr(s: &str) -> CString {
 /// A demo function to test if WASM is callable from background.js
 #[wasm_bindgen]
 pub async fn init_wasm() {
-    log("testing idb");
-    let idb_res = db::test_create_idb().await;
-    match idb_res {
-        Ok(idb) => {
-            log(&format!("idb success: {}", &idb));
-        }
-        Err(err) => {
-            log(&format!("idb err: {}", &err));
-        }
-    }
-    log("done");
-
     client::seed_temp_data().await;
     // let db = db::create_database().await;
     // match db {
@@ -196,8 +184,14 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
 }
 
 #[wasm_bindgen]
-pub async fn send_sol(from_pubkey: &str, to_pubkey: &str, lamports: u64) {
-    let send_result = client::send_sol(from_pubkey, to_pubkey, lamports).await;
+pub async fn send_sol(
+    from_pubkey: &str,
+    to_pubkey: &str,
+    lamports: u64,
+    wallet_store_password: String,
+) {
+    let send_result =
+        client::send_sol(from_pubkey, to_pubkey, lamports, wallet_store_password).await;
     report_progress(&*serde_json::to_string_pretty(&send_result).unwrap());
 }
 
