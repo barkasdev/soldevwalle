@@ -184,6 +184,16 @@ pub async fn get_wallets() {
 // }
 
 #[wasm_bindgen]
+pub async fn create_wallet(wallet_name: String, wallet_store_password: String) {
+    let created_result = client::create_wallet(wallet_name, wallet_store_password).await;
+    let created_result = match created_result {
+        Ok(v) => v.as_string().unwrap_or(String::from("No wallet data")),
+        Err(e) => e.to_string(),
+    };
+    report_progress(&*serde_json::to_string(&created_result).unwrap());
+}
+
+#[wasm_bindgen]
 pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
     let airdrop = client::request_airdrop(to_pubkey, sol_quantity).await;
     report_progress(&*serde_json::to_string_pretty(&airdrop).unwrap());
