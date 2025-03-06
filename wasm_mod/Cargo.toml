@@ -21,7 +21,7 @@ urlencoding = "2.1"
 
 # rand only works for WASM if JS support is enabled in a dependency
 # See https://docs.rs/getrandom/latest/getrandom/#webassembly-support
-rand = "0.8"
+rand = "0.9"
 getrandom = { version = "0.2", features = ["js"] }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -34,10 +34,14 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 #wee_alloc = { version = "0.4.5", optional = true }
 wasm_client_solana = { version = "0.7.5", features = ["js"] }
 solana-sdk = "2.1.13"
-spl-token = "7.0.0"
-anyhow = "1.0.95"
+spl-token = "7.0"
+anyhow = "1.0"
 #deli = { version = "0.2.0", features = ["derive"] }
 idb = "0.6.4"
+aes-gcm = "0.10"
+pbkdf2 = "0.12"
+sha2 = "0.10"
+hex = "0.4"
 
 [dependencies.web-sys]
 version = "0.3"

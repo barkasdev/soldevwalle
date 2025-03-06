@@ -1,11 +1,13 @@
-use crate::models::{MyBalance, MyNetwork, MyWallet};
 // use std::time::Duration;
 // use crate::{
 //     constants,
 //     constants::log,
 //     report_progress,
 // };
+use crate::client::crypto_manager::CryptoManager;
+use crate::models::{MyBalance, MyNetwork, MyWallet};
 use crate::{db, log};
+use idb::Query;
 use solana_sdk::native_token::sol_to_lamports;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature};
@@ -16,6 +18,8 @@ use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::{FutureExt, TryFutureExt};
 use wasm_client_solana::{ClientError, ClientResult, SolanaRpcClient};
 // here go functions to export
+
+mod crypto_manager;
 
 pub async fn get_networks() -> Vec<MyNetwork> {
     db::get_all_store_objects::<MyNetwork>("networks")
@@ -29,18 +33,21 @@ pub async fn get_networks_async() -> Result<JsValue, JsValue> {
         .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
 }
 
-pub async fn create_wallet() -> ClientResult<JsValue> {
+pub async fn create_wallet(
+    wallet_name: String,
+    wallet_store_password: String,
+) -> ClientResult<JsValue> {
     let network_name = get_active_network().await.map(|n| n.address());
     if let None = network_name {
         return Err(ClientError::Other("Can't get active network".to_string()));
     }
     let client = SolanaRpcClient::new(network_name.unwrap().as_str());
     let keypair = Keypair::new();
-    log(format!("{}", keypair.pubkey().to_string()).as_str());
-    // keypair.pubkey(), keypair.secret()
+    let crypto = CryptoManager::new(wallet_store_password);
     let new_wallet = MyWallet {
+        name: wallet_name,
         pubkey: keypair.pubkey().to_string(),
-        keypair: keypair.to_base58_string(),
+        keypair: crypto.encrypt(keypair.to_base58_string()),
         account_info: None,
     };
     let added = db::add_object("wallets", new_wallet).await;
@@ -74,6 +81,31 @@ pub async fn get_active_network() -> Option<MyNetwork> {
         .unwrap_or(Vec::new())
         .into_iter()
         .find(|n| n.active)
+}
+
+pub async fn set_active_network(network_name: String) -> ClientResult<Option<MyNetwork>> {
+    let last_active_network = get_active_network().await;
+    let changing_network = db::get_store_object::<MyNetwork>(
+        "networks",
+        "network_name",
+        Query::Key(JsValue::from_str(&network_name)),
+    )
+    .await?;
+    if last_active_network.is_none() || changing_network.is_none() {
+        Err(ClientError::Other(
+            "Can't get active network or network to be set active".to_string(),
+        ))
+    } else {
+        let mut last_active_network = last_active_network.unwrap();
+        let id = last_active_network.id;
+        last_active_network.active = false;
+        db::update_object("networks", last_active_network, Some(&JsValue::from(id))).await?;
+        let mut changing_network = changing_network.unwrap();
+        changing_network.active = true;
+        let id = changing_network.id;
+        db::update_object("networks", changing_network, Some(&JsValue::from(id))).await?;
+        Ok(get_active_network().await)
+    }
 }
 
 pub async fn get_account_info(for_pubkey: &str) -> String {
@@ -111,11 +143,16 @@ pub async fn send_sol(
     from_pubkey: &str,
     to_pubkey: &str,
     lamports: u64,
+    wallet_store_password: String,
 ) -> ClientResult<Signature> {
     let wallets = get_wallets().await;
     let wallet = wallets.iter().filter(|n| n.pubkey.eq(from_pubkey)).next();
-    if let Some(wallet) = wallet {
-        let from_keypair = Keypair::from_base58_string(wallet.keypair.as_str());
+    if let Some(wallet_from_db) = wallet {
+        //decrypt
+        let from_keypair = Keypair::from_base58_string(
+            CryptoManager::decrypt(wallet_store_password, wallet_from_db.keypair.clone()).as_str(),
+        );
+
         let network_name = get_active_network().await.map(|n| n.address());
         if let None = network_name {
             return Err(ClientError::Other("Can't get active network".to_string()));
@@ -155,8 +192,15 @@ pub async fn seed_temp_data() {
     if let Ok(db) = database {
         db::try_seed_data(&db).await.unwrap();
     }
-    create_wallet().await.unwrap();
-    create_wallet().await.unwrap();
-    create_wallet().await.unwrap();
+    //TODO get password
+    create_wallet("test_wallet_1".to_string(), "test_password".to_string())
+        .await
+        .unwrap();
+    create_wallet("test_wallet_2".to_string(), "test_password".to_string())
+        .await
+        .unwrap();
+    create_wallet("test_wallet_3".to_string(), "test_password".to_string())
+        .await
+        .unwrap();
     log("seed_data end");
 }
