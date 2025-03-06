@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom/client'
 import '../index.css'
 import App from './App/App'
 import reportWebVitals from '../reportWebVitals'
-import Browser from 'webextension-polyfill'
-import { BrowserRouter, HashRouter } from 'react-router-dom'
+import { HashRouter } from 'react-router-dom'
 
 const rootElement = document.getElementById('root') as HTMLElement;
 rootElement.classList.add('container');

@@ -1,23 +1,51 @@
 {
   "manifest_version": 3,
-  "name": "My Extension",
-  "version": "1.0.0",
-  "description": "A simple Chrome extension.",
-  "icons": {
-    "16": "solanaLogo1.png",
-    "48": "solanaLogo1.png",
-    "128": "solanaLogo1.png"
-  },
-  "background": {
-    "service_worker": "./static/js/background.js"
-
-  },
-  "action": {
-    "default_popup": "index.html"
-  },
+  "name": "Browser Extension to monitor Solana stats",
+  "version": "1.0",
+  "description": "A Solana developer wallet extension.",
   "permissions": [
     "storage",
-    "tabs",
-    "activeTab"
-  ]
+    "scripting",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self';",
+    "sandbox": "sandbox allow-scripts; default-src 'self' 'wasm-unsafe-eval'; frame-src 'self'; worker-src 'self'"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "static/js/content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "wasm/wasm_mod.js",
+        "wasm/wasm_mod_bg.wasm"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "solanaLogo1.png",
+      "48": "solanaLogo1.png",
+      "128": "solanaLogo1.png"
+    }
+  }
 }
