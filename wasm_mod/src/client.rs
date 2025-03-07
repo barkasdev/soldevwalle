@@ -5,6 +5,7 @@
 //     report_progress,
 // };
 use crate::client::crypto_manager::CryptoManager;
+use crate::db::get_all_store_objects;
 use crate::models::{MyBalance, MyNetwork, MyWallet};
 use crate::{db, log};
 use idb::Query;
@@ -33,17 +34,19 @@ pub async fn get_networks_async() -> Result<JsValue, JsValue> {
         .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
 }
 
+/// creates a wallet,
+/// returns its pubkey
 pub async fn create_wallet(
     wallet_name: String,
     wallet_store_password: String,
 ) -> ClientResult<JsValue> {
-    let network_name = get_active_network().await.map(|n| n.address());
-    if let None = network_name {
+    let network_address = get_active_network().await.map(|n| n.address());
+    if let None = network_address {
         return Err(ClientError::Other("Can't get active network".to_string()));
     }
-    let client = SolanaRpcClient::new(network_name.unwrap().as_str());
+    let client = SolanaRpcClient::new(network_address.unwrap().as_str());
     let keypair = Keypair::new();
-    let crypto = CryptoManager::new(wallet_store_password);
+    let crypto = CryptoManager::new(wallet_store_password.clone());
     let new_wallet = MyWallet {
         name: wallet_name,
         pubkey: keypair.pubkey().to_string(),
@@ -52,7 +55,7 @@ pub async fn create_wallet(
     };
     let added = db::add_object("wallets", new_wallet).await;
     log(format!("added: {:?}", added).as_str());
-    added
+    Ok(JsValue::from_str(keypair.pubkey().to_string().as_str()))
 }
 
 pub async fn get_wallets() -> Vec<MyWallet> {
@@ -142,7 +145,7 @@ pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
 pub async fn send_sol(
     from_pubkey: &str,
     to_pubkey: &str,
-    lamports: u64,
+    sol: f64,
     wallet_store_password: String,
 ) -> ClientResult<Signature> {
     let wallets = get_wallets().await;
@@ -160,8 +163,12 @@ pub async fn send_sol(
         let client = SolanaRpcClient::new(network_name.unwrap().as_str());
         let latest_blockhash = client.get_latest_blockhash().await?;
         let to_pubkey = Pubkey::from_str(to_pubkey).unwrap();
-        let tx =
-            system_transaction::transfer(&from_keypair, &to_pubkey, lamports, latest_blockhash);
+        let tx = system_transaction::transfer(
+            &from_keypair,
+            &to_pubkey,
+            sol_to_lamports(sol),
+            latest_blockhash,
+        );
         let signature = client.send_and_confirm_transaction(&tx.into()).await?;
         Ok(signature)
     } else {
@@ -187,20 +194,56 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult
     }
 }
 
-pub async fn seed_temp_data() {
+pub async fn seed_temp_data(wallet_store_password: String) {
     let database = db::open_database().await;
     if let Ok(db) = database {
         db::try_seed_data(&db).await.unwrap();
     }
-    //TODO get password
-    create_wallet("test_wallet_1".to_string(), "test_password".to_string())
-        .await
-        .unwrap();
-    create_wallet("test_wallet_2".to_string(), "test_password".to_string())
-        .await
-        .unwrap();
-    create_wallet("test_wallet_3".to_string(), "test_password".to_string())
-        .await
-        .unwrap();
-    log("seed_data end");
+
+    // create test wallets if they don't exist in the db
+    let wallets = get_all_store_objects::<MyWallet>("wallets").await;
+    let existing_names = match wallets {
+        Ok(wallets_vec) => wallets_vec
+            .iter()
+            .map(|wallet| wallet.name.clone())
+            .collect::<Vec<String>>(),
+        Err(_) => Vec::new(),
+    };
+    //up to 4 pcs
+    let missing_wallets_count = 4 - existing_names.len();
+
+    let mut created_wallets_count = 0;
+    for _ in 0..missing_wallets_count {
+        //check if the name is free
+        let mut idx = 0;
+        let mut wallet_name = format!("test-wallet-{}", idx);
+        while existing_names.contains(&wallet_name) {
+            idx += 1;
+            wallet_name = format!("test-wallet-{}", idx);
+        }
+        //create wallet
+        let wallet_pubkey = create_wallet(wallet_name, wallet_store_password.clone()).await;
+        match wallet_pubkey {
+            Ok(wallet) => {
+                created_wallets_count += 1;
+                //request airdrop of 5 SOL
+                let pubkey = wallet.as_string().unwrap();
+                let faucet = request_airdrop(pubkey.as_str(), 5.).await;
+                match faucet {
+                    Ok(_) => {
+                        log(&format!("faucet successfully requested for {}", pubkey));
+                    }
+                    Err(e) => {
+                        log(&format!("Failed to request airdrop to {pubkey}: {e}"));
+                    }
+                }
+            }
+            Err(_) => {
+                log("Failed to create wallet");
+            }
+        }
+    }
+    log(&format!(
+        "seed_data end, created {created_wallets_count} out of {missing_wallets_count} wallets"
+    ));
 }

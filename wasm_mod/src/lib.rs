@@ -88,8 +88,8 @@ fn cstr(s: &str) -> CString {
 
 /// A demo function to test if WASM is callable from background.js
 #[wasm_bindgen]
-pub async fn init_wasm() {
-    client::seed_temp_data().await;
+pub async fn init_wasm(wallet_store_password: String) {
+    client::seed_temp_data(wallet_store_password).await;
     // let db = db::create_database().await;
     // match db {
     //     Ok(db) => {
@@ -176,13 +176,6 @@ pub async fn get_wallets() {
     report_progress(&*serde_json::to_string_pretty(&wallets).unwrap());
 }
 
-// #[wasm_bindgen]
-// pub async fn get_active_network() {
-//     let network = client::get_active_network().await;
-//     // log(format!("get_active_network: {:#?}", network).as_str());
-//     report_progress(&*serde_json::to_string_pretty(&network).unwrap());
-// }
-
 #[wasm_bindgen]
 pub async fn create_wallet(wallet_name: String, wallet_store_password: String) {
     let created_result = client::create_wallet(wallet_name, wallet_store_password).await;
@@ -203,11 +196,11 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
 pub async fn send_sol(
     from_pubkey: &str,
     to_pubkey: &str,
-    lamports: u64,
+    sol: f64,
     wallet_store_password: String,
 ) {
     let send_result =
-        client::send_sol(from_pubkey, to_pubkey, lamports, wallet_store_password).await;
+        client::send_sol(from_pubkey, to_pubkey, sol, wallet_store_password).await;
     report_progress(&*serde_json::to_string_pretty(&send_result).unwrap());
 }
 
