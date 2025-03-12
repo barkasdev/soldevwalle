@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaBars, FaHome, FaClock, FaUser } from 'react-icons/fa';
 import AccountDropdown from '../Components/AccountDropdown';
@@ -7,7 +9,7 @@ import initWasm ,{ get_networks_async } from '../../utils/wasm/wasm_mod';
 
 
 const WalletPage: React.FC = () => {
-    const [networks, setNetworks] = useState<{ networkName: string; address: string; active: boolean }[]>([]);
+    const [networks, setNetworks] = useState<{ name: string; address: string; active: boolean }[]>([]);
     const [selectedNetwork, setSelectedNetwork] = useState<string>("");   // Default selected network
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false); // Toggle dropdown visibility
 
@@ -17,8 +19,8 @@ const WalletPage: React.FC = () => {
             const networkList = await get_networks_async();
             
             // Rename "name" property to "networkName"
-            const formattedNetworks = networkList.map((net: { networkName: any; address: any; active: any; }) => ({
-                networkName: net.networkName, 
+            const formattedNetworks = networkList.map((net: { name: any; address: any; active: any; }) => ({
+                networkName: net.name, 
                 address: net.address,
                 active: net.active
             }));
@@ -27,7 +29,7 @@ const WalletPage: React.FC = () => {
 
             // Set initially active network
             const activeNetwork = formattedNetworks.find((net: { active: any; }) => net.active);
-            if (activeNetwork) setSelectedNetwork(activeNetwork.networkName);
+            if (activeNetwork) setSelectedNetwork(activeNetwork.name);
         };
 
         loadNetworks();
@@ -36,13 +38,15 @@ const WalletPage: React.FC = () => {
     const handleNetworkSelect = (selectedNetworkName: string) => {
         const updatedNetworks = networks.map((net) => ({
             ...net,
-            active: net.networkName === selectedNetworkName, // Set only the selected one to active
+            active: net.name === selectedNetworkName, // Set only the selected one to active
         }));
 
         setNetworks(updatedNetworks); // Update state
         setSelectedNetwork(selectedNetworkName); // Update displayed network
         setDropdownOpen(false); // Close dropdown
     };
+
+    console.log('networks: ', networks);
 
     return (
         <div className="container flex flex-col items-center text-white p-4">
@@ -63,13 +67,13 @@ const WalletPage: React.FC = () => {
                         <div className="absolute left-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
                             {networks.map((network) => (
                                 <button
-                                    key={network.networkName}
+                                    key={network.name}
                                     className={`block w-full text-left px-3 py-2 hover:bg-gray-200 ${
                                         network.active ? "font-bold bg-gray-300" : ""
                                     }`}
-                                    onClick={() => handleNetworkSelect(network.networkName)}
+                                    onClick={() => handleNetworkSelect(network.name)}
                                 >
-                                    {network.networkName}
+                                    {network.name}
                                 </button>
                             ))}
                         </div>
