@@ -1,0 +1,20 @@
+{
+    "env": {
+      "es2021": true,  
+      "browser": true,
+      "worker": true,
+      "webextensions": true  // ✅ Enables Chrome extension APIs
+    },
+    "globals": {
+      "chrome": "readonly",  // ✅ Allows Chrome APIs
+      "FinalizationRegistry": "readonly",  // ✅ Allows modern JS garbage collection
+      "globalThis": "readonly",  // ✅ Allows `globalThis` usage
+      "self": "readonly",  // ✅ Allows `self` in Web Workers
+      "WorkerGlobalScope": "readonly"  // ✅ Allows `WorkerGlobalScope`
+    },
+    "rules": {
+      "no-undef": "off",  // ✅ Prevents errors for built-in globals
+      "no-restricted-globals": ["error", "name", "status"]  // ✅ Allows `self`
+    }
+  }
+  
