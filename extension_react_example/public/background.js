@@ -1,10 +1,7 @@
-import initWasmModule, { init_wasm, get_networks, get_networks_async } from "./wasm/wasm_mod.js";  // ✅ Static Import
+import initWasmModule, { init_wasm } from './wasm/wasm_mod.js';
 
 (async () => {
-    await initWasmModule();  // ✅ Initialize WASM
-    init_wasm();  // ✅ Call WASM function
-    get_networks_async();
-    console.log("WASM Initialized in Background");
+    await initWasmModule();
+    init_wasm(); // this call logs a hello message from WASM for demo purposes
+    report_state("wasm initialized");
 })();
-
-console.log("Background script started");
