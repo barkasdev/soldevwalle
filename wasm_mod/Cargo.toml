@@ -22,7 +22,7 @@ urlencoding = "2.1"
 # rand only works for WASM if JS support is enabled in a dependency
 # See https://docs.rs/getrandom/latest/getrandom/#webassembly-support
 rand = "0.9"
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
