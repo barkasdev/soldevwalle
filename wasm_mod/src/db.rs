@@ -114,8 +114,15 @@ pub async fn try_seed_data(db: &Database) -> Result<(), Error> {
         let transaction = db.transaction(&[store_name], TransactionMode::ReadWrite)?;
         let store = transaction.object_store(store_name)?;
         let serialized_value = serde_wasm_bindgen::to_value(&network).unwrap();
-        let _id = store.add(&serialized_value, None)?.await?;
-        transaction.commit()?.await?;
+        let _id = store.add(&serialized_value, None)?.await;
+        match _id {
+            Ok(_) => {
+                transaction.commit()?.await?;
+            }
+            Err(_) => {
+                log(&format!("[error] network {} not found", store_name));
+            }
+        }
     }
     Ok(())
 }
@@ -126,7 +133,7 @@ where
 {
     // log(&format!("[parse_object] object: {:?}", db_data));
     // serde_json::from_str::<O>(db_data.as_string().unwrap_or_default().as_str()).ok()
-    
+
     serde_wasm_bindgen::from_value(db_data.to_owned()).ok()
 }
 
