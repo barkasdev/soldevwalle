@@ -13,22 +13,44 @@ use wasm_client_solana::{ClientError, ClientResult};
 pub async fn open_database() -> ClientResult<Database> {
     let factory = Factory::new().map_err(|e| ClientError::Other(e.to_string()))?;
     factory
-        .open("soldevwalle", None)
+        .open("soldevwalle", Some(1))
+        .inspect_err(|e| log(format!("error opening database: {:?}", e).as_str()))
         .unwrap()
         .await
         .map_err(|e| ClientError::Other(e.to_string()))
 }
 pub async fn create_database() -> Result<Database, Error> {
+    log("create database");
     // Get a factory instance from global scope
     let factory = Factory::new()?;
+    
+    factory.delete("soldevwalle")?;
 
     // Create an open request for the database
-    let mut open_request = factory.open("soldevwalle", None).unwrap();
+    let mut open_request = factory.open("soldevwalle", Some(1))?;
 
     // Add an upgrade handler for database
     open_request.on_upgrade_needed(|event| {
         // Get database instance from event
         let database = event.database().unwrap();
+        let old_version = event.old_version();
+        let new_version = event.new_version();
+        log(format!(
+            "upgrade needed. old db version: {:?}, new db version: {:?}",
+            old_version, new_version
+        )
+        .as_str());
+        
+        // if old_version < 1 {
+        //     // Initial setup for version 1
+        //     db.create_object_store("store1")?;
+        // }
+        //
+        // if old_version < 2 {
+        //     // Upgrade to version 2
+        //     db.create_object_store("store2")?;
+        // }
+        
 
         // Prepare object store params
         let mut store_params = ObjectStoreParams::new();
@@ -112,7 +134,9 @@ pub async fn try_seed_data(db: &Database) -> Result<(), Error> {
     for network in &hardcoded_networks {
         let store_name = "networks";
         let transaction = db.transaction(&[store_name], TransactionMode::ReadWrite)?;
-        let store = transaction.object_store(store_name)?;
+        let store = transaction
+            .object_store(store_name)
+            .inspect_err(|e| log(format!("networks store error: {:?}", e).as_str()))?;
         let serialized_value = serde_wasm_bindgen::to_value(&network).unwrap();
         let _id = store.add(&serialized_value, None)?.await;
         match _id {

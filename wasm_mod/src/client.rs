@@ -194,10 +194,21 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult
     }
 }
 
-pub async fn seed_temp_data(wallet_store_password: String) {
-    let database = db::open_database().await;
+pub async fn seed_initial_data(wallet_store_password: String) {
+    let database = db::open_database()
+        .await
+        .inspect_err(|err| log(&format!("error opening db: {:?}", err)));
     if let Ok(db) = database {
         db::try_seed_data(&db).await.unwrap();
+    } else {
+        let db = db::create_database()
+            .await
+            .inspect_err(|e| log(format!("error creating db {:?}", e).as_str()));
+        if let Ok(db) = db {
+            db::try_seed_data(&db).await.unwrap();
+        } else {
+            log("Unable to create database");
+        }
     }
 
     // create test wallets if they don't exist in the db
@@ -209,6 +220,7 @@ pub async fn seed_temp_data(wallet_store_password: String) {
             .collect::<Vec<String>>(),
         Err(_) => Vec::new(),
     };
+    log(format!("{:?}", existing_names).as_str());
     //up to 4 pcs
     let missing_wallets_count = 4 - existing_names.len();
 

@@ -4,6 +4,7 @@ use hex::{decode, encode};
 use pbkdf2::pbkdf2_hmac;
 use sha2::Sha256;
 use wasm_bindgen::prelude::*;
+use crate::log;
 
 const PBKDF2_ITERATIONS: u32 = 100_000;
 const KEY_SIZE: usize = 32; // 256-bit key
@@ -19,8 +20,11 @@ pub struct CryptoManager {
 impl CryptoManager {
     #[wasm_bindgen(constructor)]
     pub fn new(password: String) -> CryptoManager {
+        log("create crypto manager");
         let mut salt = [0u8; SALT_SIZE];
-        getrandom::fill(&mut salt).expect("Failed to generate salt");
+        getrandom::fill(&mut salt)
+            .inspect_err(|err| {log(&format!("getrandom failed: {:?}", err))})
+            .expect("Failed to generate salt");
 
         let mut key_bytes = [0u8; KEY_SIZE];
         pbkdf2_hmac::<Sha256>(

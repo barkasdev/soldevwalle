@@ -29,9 +29,6 @@
       ],
       "js": [
         "js/popup.js",
-        //        "js/worker.js",
-        //        "js/background.js",
-        //        "js/offscreen.js",
         "js/background_copy.js",
         "js/wasm/wasm_mod.js"
       ],
@@ -65,9 +62,7 @@
       "resources": [
         "js/background_copy.js",
         "js/wasm/wasm_mod.js",
-        "js/wasm/sqlite3.wasm",
         "js/wasm/wasm_mod_bg.wasm"
-        //        "js/worker.js"
       ]
     }
   ]
