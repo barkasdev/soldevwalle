@@ -10,10 +10,12 @@ use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::Wallet;
 use wasm_client_solana::{ClientError, ClientResult};
 
+const IDB_VERSION: Option<u32> = None;
+
 pub async fn open_database() -> ClientResult<Database> {
     let factory = Factory::new().map_err(|e| ClientError::Other(e.to_string()))?;
     factory
-        .open("soldevwalle", Some(1))
+        .open("soldevwalle", IDB_VERSION)
         .inspect_err(|e| log(format!("error opening database: {:?}", e).as_str()))
         .unwrap()
         .await
@@ -23,11 +25,11 @@ pub async fn create_database() -> Result<Database, Error> {
     log("create database");
     // Get a factory instance from global scope
     let factory = Factory::new()?;
-    
+
     factory.delete("soldevwalle")?;
 
     // Create an open request for the database
-    let mut open_request = factory.open("soldevwalle", Some(1))?;
+    let mut open_request = factory.open("soldevwalle", IDB_VERSION)?;
 
     // Add an upgrade handler for database
     open_request.on_upgrade_needed(|event| {
@@ -40,7 +42,7 @@ pub async fn create_database() -> Result<Database, Error> {
             old_version, new_version
         )
         .as_str());
-        
+
         // if old_version < 1 {
         //     // Initial setup for version 1
         //     db.create_object_store("store1")?;
@@ -50,7 +52,6 @@ pub async fn create_database() -> Result<Database, Error> {
         //     // Upgrade to version 2
         //     db.create_object_store("store2")?;
         // }
-        
 
         // Prepare object store params
         let mut store_params = ObjectStoreParams::new();
@@ -58,9 +59,6 @@ pub async fn create_database() -> Result<Database, Error> {
         store_params.key_path(Some(KeyPath::new_single("id")));
 
         // Create object stores
-        let store = database
-            .create_object_store("employees", store_params.clone())
-            .unwrap();
         // TODO use network name etc. as keys
         let networks_store = database
             .create_object_store("networks", store_params.clone())
@@ -83,7 +81,7 @@ pub async fn create_database() -> Result<Database, Error> {
             )
             .unwrap();
 
-        log(&format!("[save] networks created: {:?}", networks_store));
+        log(&format!("[save] networks store created: {:?}", networks_store));
         let wallets_store = database
             .create_object_store("wallets", store_params.clone())
             .unwrap();
@@ -144,7 +142,7 @@ pub async fn try_seed_data(db: &Database) -> Result<(), Error> {
                 transaction.commit()?.await?;
             }
             Err(_) => {
-                log(&format!("[error] network {} not found", store_name));
+                log(&format!("[error] store {} not found", store_name));
             }
         }
     }

@@ -213,7 +213,7 @@ pub async fn seed_initial_data(wallet_store_password: String) {
 
     // create test wallets if they don't exist in the db
     let wallets = get_all_store_objects::<MyWallet>("wallets").await;
-    let existing_names = match wallets {
+    let mut existing_names = match wallets {
         Ok(wallets_vec) => wallets_vec
             .iter()
             .map(|wallet| wallet.name.clone())
@@ -234,10 +234,11 @@ pub async fn seed_initial_data(wallet_store_password: String) {
             wallet_name = format!("test-wallet-{}", idx);
         }
         //create wallet
-        let wallet_pubkey = create_wallet(wallet_name, wallet_store_password.clone()).await;
+        let wallet_pubkey = create_wallet(wallet_name.clone(), wallet_store_password.clone()).await;
         match wallet_pubkey {
             Ok(wallet) => {
                 created_wallets_count += 1;
+                existing_names.push(wallet_name);
                 //request airdrop of 5 SOL
                 let pubkey = wallet.as_string().unwrap();
                 let faucet = request_airdrop(pubkey.as_str(), 5.).await;

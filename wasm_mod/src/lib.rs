@@ -38,13 +38,16 @@ extern "C" {
     fn log(s: &str);
 }
 
+#[wasm_bindgen(start)]
+pub fn main() {
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
+    // console_error_panic_hook::set_once();
+}
 
-/// A demo function to test if WASM is callable from background.js
 #[wasm_bindgen]
 pub async fn init_wasm(wallet_store_password: String) {
     log("Initializing wasm...");
-    panic::set_hook(Box::new(console_error_panic_hook::hook));
-    // let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
+    let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
     client::seed_initial_data(wallet_store_password).await;
     // match db {
     //     Ok(db) => {

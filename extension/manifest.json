@@ -32,7 +32,8 @@
         "js/background_copy.js",
         "js/wasm/wasm_mod.js"
       ],
-      "run_at": "document_idle"
+      "type": "module",
+      "run_at": "document_start"
     }
   ],
   "content_security_policy": {

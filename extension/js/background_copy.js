@@ -1,6 +1,7 @@
 // A static import is required in b/g scripts because they are executed in their own env
 // not connected to the content scripts where wasm is loaded automatically
-import initWasmModule, {init_wasm, report_state} from './wasm/wasm_mod.js';
+import initWasmModule from './wasm/wasm_mod.js';
+import {init_wasm, report_state} from './wasm/wasm_mod.js';
 
 
 console.log("Background script started");
@@ -40,10 +41,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     console.log(`Popup message received: ${JSON.stringify(request)}, ${JSON.stringify(sender)}`);
 
     // call the WASM code
-    if (!fetching) {
 
-        // indicate an active WASM process
-        fetching = true;
 
 
         // call WASM
@@ -55,7 +53,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             .finally(() => {
                 // reset WASM, log to inactive
             })
-    }
 });
 
 
