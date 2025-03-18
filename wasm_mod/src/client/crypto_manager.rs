@@ -20,9 +20,9 @@ pub struct CryptoManager {
 impl CryptoManager {
     #[wasm_bindgen(constructor)]
     pub fn new(password: String) -> CryptoManager {
-        log("create crypto manager");
+        // log("create crypto manager");
         let mut salt = [0u8; SALT_SIZE];
-        getrandom::getrandom(&mut salt)
+        getrandom::fill(&mut salt)
             .inspect_err(|err| {log(&format!("getrandom failed: {:?}", err))})
             .expect("Failed to generate salt");
 
@@ -44,7 +44,7 @@ impl CryptoManager {
     pub fn encrypt(&self, data: String) -> String {
         let cipher = Aes256Gcm::new(&self.key);
         let mut iv = [0u8; 12];
-        getrandom::getrandom(&mut iv).expect("Failed to generate IV");
+        getrandom::fill(&mut iv).expect("Failed to generate IV");
 
         let nonce = Nonce::from_slice(&iv);
         let encrypted = cipher

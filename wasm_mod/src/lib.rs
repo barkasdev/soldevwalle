@@ -47,7 +47,7 @@ pub fn main() {
 #[wasm_bindgen]
 pub async fn init_wasm(wallet_store_password: String) {
     log("Initializing wasm...");
-    let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
+    // let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
     client::seed_initial_data(wallet_store_password).await;
     // match db {
     //     Ok(db) => {
@@ -70,13 +70,13 @@ pub async fn init_wasm(wallet_store_password: String) {
     // // let drop = client.request_airdrop(&address, sol_to_lamports(1.0)).await;
     // log(format!("{account:#?}").as_str());
 
-    let _networks = get_networks().await;
-    // log(format!("{:#?}", networks).as_str());
+    // let _networks = get_networks().await;
+    // log(format!("(init_wasm) networks: {:#?}", _networks).as_str());
 
-    let _wallets = get_wallets().await;
+    // let _wallets = get_wallets().await;
     // log(format!("{:#?}", wallets).as_str());
 
-    log("init WASM!");
+    log("init Wasm end");
 }
 
 /// The main entry point callable from `background.js`.

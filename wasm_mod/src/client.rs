@@ -54,7 +54,7 @@ pub async fn create_wallet(
         account_info: None,
     };
     let added = db::add_object("wallets", new_wallet).await;
-    log(format!("added: {:?}", added).as_str());
+    // log(format!("added: {:?}", added).as_str());
     Ok(JsValue::from_str(keypair.pubkey().to_string().as_str()))
 }
 
@@ -195,21 +195,24 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult
 }
 
 pub async fn seed_initial_data(wallet_store_password: String) {
+    // log("seed_initial_data");
     let database = db::open_database()
         .await
         .inspect_err(|err| log(&format!("error opening db: {:?}", err)));
     if let Ok(db) = database {
-        db::try_seed_data(&db).await.unwrap();
+        db::try_seed_networks(&db).await.unwrap();
     } else {
         let db = db::create_database()
             .await
             .inspect_err(|e| log(format!("error creating db {:?}", e).as_str()));
         if let Ok(db) = db {
-            db::try_seed_data(&db).await.unwrap();
+            db::try_seed_networks(&db).await.unwrap();
         } else {
             log("Unable to create database");
         }
     }
+    // let networks = get_networks().await;
+    // log(format!("(seed_initial_data) networks: {:#?}", networks).as_str());
 
     // create test wallets if they don't exist in the db
     let wallets = get_all_store_objects::<MyWallet>("wallets").await;
@@ -251,12 +254,12 @@ pub async fn seed_initial_data(wallet_store_password: String) {
                     }
                 }
             }
-            Err(_) => {
-                log("Failed to create wallet");
+            Err(e) => {
+                log(format!("Failed to create wallet {wallet_name}: {}", e).as_str());
             }
         }
     }
     log(&format!(
-        "seed_data end, created {created_wallets_count} out of {missing_wallets_count} wallets"
+        "seed_initial_data end, created {created_wallets_count} out of {missing_wallets_count} wallets"
     ));
 }
