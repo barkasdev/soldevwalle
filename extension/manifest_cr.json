@@ -28,8 +28,10 @@
             ],
             "js": [
                 "js/popup.js",
-                "js/popup.js"
+                "js/background_copy.js",
+                "js/wasm/wasm_mod.js"
             ],
+            "type": "module",
             "run_at": "document_end"
         }
     ],

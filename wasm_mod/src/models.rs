@@ -37,10 +37,19 @@ pub struct MyNetwork {
 
 #[wasm_bindgen]
 impl MyNetwork {
-    #[wasm_bindgen(constructor)]
-    pub fn new(name: String, address: String, active: bool) -> MyNetwork {
+    pub fn new_default_id(name: String, address: String, active: bool) -> MyNetwork {
         MyNetwork{
             id: Default::default(),
+            name,
+            address,
+            active,
+        }
+    }
+    
+    #[wasm_bindgen(constructor)]
+    pub fn new(id: i32, name: String, address: String, active: bool) -> MyNetwork {
+        MyNetwork{
+            id,
             name,
             address,
             active,

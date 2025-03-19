@@ -6,29 +6,53 @@ use idb::{
 };
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::Wallet;
 use wasm_client_solana::{ClientError, ClientResult};
 
+const IDB_VERSION: Option<u32> = None;
+
 pub async fn open_database() -> ClientResult<Database> {
     let factory = Factory::new().map_err(|e| ClientError::Other(e.to_string()))?;
     factory
-        .open("soldevwalle", None)
+        .open("soldevwalle", IDB_VERSION)
+        .inspect_err(|e| log(format!("error opening database: {:?}", e).as_str()))
         .unwrap()
         .await
         .map_err(|e| ClientError::Other(e.to_string()))
 }
 pub async fn create_database() -> Result<Database, Error> {
+    // log("create database");
     // Get a factory instance from global scope
     let factory = Factory::new()?;
 
+    factory.delete("soldevwalle")?;
+
     // Create an open request for the database
-    let mut open_request = factory.open("soldevwalle", None).unwrap();
+    let mut open_request = factory.open("soldevwalle", IDB_VERSION)?;
 
     // Add an upgrade handler for database
     open_request.on_upgrade_needed(|event| {
         // Get database instance from event
         let database = event.database().unwrap();
+        let old_version = event.old_version();
+        let new_version = event.new_version();
+        log(format!(
+            "upgrade needed. old db version: {:?}, new db version: {:?}",
+            old_version, new_version
+        )
+        .as_str());
+
+        // if old_version < 1 {
+        //     // Initial setup for version 1
+        //     db.create_object_store("store1")?;
+        // }
+        //
+        // if old_version < 2 {
+        //     // Upgrade to version 2
+        //     db.create_object_store("store2")?;
+        // }
 
         // Prepare object store params
         let mut store_params = ObjectStoreParams::new();
@@ -36,10 +60,7 @@ pub async fn create_database() -> Result<Database, Error> {
         store_params.key_path(Some(KeyPath::new_single("id")));
 
         // Create object stores
-        let store = database
-            .create_object_store("employees", store_params.clone())
-            .unwrap();
-        // TODO use network name etc. as keys
+        // TODO use network name etc. as keys?
         let networks_store = database
             .create_object_store("networks", store_params.clone())
             .unwrap();
@@ -61,7 +82,10 @@ pub async fn create_database() -> Result<Database, Error> {
             )
             .unwrap();
 
-        log(&format!("[save] networks created: {:?}", networks_store));
+        // log(&format!(
+        //     "[save] networks store created: {:?}",
+        //     networks_store
+        // ));
         let wallets_store = database
             .create_object_store("wallets", store_params.clone())
             .unwrap();
@@ -81,49 +105,69 @@ pub async fn create_database() -> Result<Database, Error> {
     result_db
 }
 
-pub async fn try_seed_data(db: &Database) -> Result<(), Error> {
+pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
+    // log("try seed networks");
     let hardcoded_networks = vec![
         MyNetwork::new(
+            0,
             String::from("DEVNET"),
             String::from("https://api.devnet.solana.com"),
             true,
         ),
         MyNetwork::new(
+            1,
             String::from("TESTNET"),
             String::from("https://api.devnet.solana.com"),
             false,
         ),
         MyNetwork::new(
+            2,
             String::from("MAINNET"),
             String::from("https://api.devnet.solana.com"),
             false,
         ),
         MyNetwork::new(
+            3,
             String::from("LOCALNET"),
             String::from("https://api.devnet.solana.com"),
             false,
         ),
         MyNetwork::new(
+            4,
             String::from("DEBUG"),
             String::from("https://api.devnet.solana.com"),
             false,
         ),
     ];
+    let store_name = "networks";
     for network in &hardcoded_networks {
-        let store_name = "networks";
         let transaction = db.transaction(&[store_name], TransactionMode::ReadWrite)?;
-        let store = transaction.object_store(store_name)?;
+        let store = transaction
+            .object_store(store_name)
+            .inspect_err(|e| log(format!("networks store error: {:?}", e).as_str()))?;
+
         let serialized_value = serde_wasm_bindgen::to_value(&network).unwrap();
-        let _id = store.add(&serialized_value, None)?.await;
-        match _id {
-            Ok(_) => {
-                transaction.commit()?.await?;
-            }
-            Err(_) => {
-                log(&format!("[error] network {} not found", store_name));
-            }
-        }
+        /*
+        let mut no_id_value: serde_json::Value = from_value(serialized_value).unwrap();
+        no_id_value.as_object_mut().unwrap().remove("id").unwrap();
+
+        let _id = store
+            .add(&to_value(&no_id_value).unwrap(), None)?
+            .await
+            .inspect_err(|e| {
+                log(format!("error adding network '{:?}': {:?}", &network, e).as_str())
+            });
+        */
+        store
+            .add(&serialized_value, None)?;
+
+        transaction.commit()?.await.inspect_err(|e| {
+            log(format!("error committing network '{:?}'", e).as_str());
+        })?;
     }
+    // log("try seed networks end");
+    // let _networks = get_networks_sync().await;
+    // log(format!("networks from db: {:?}", _networks).as_str());
     Ok(())
 }
 
@@ -156,6 +200,7 @@ where
         .await
         .map_err(|e| ClientError::Other(e.to_string()))?
         .iter()
+        // .inspect(|elm|log(format!("get all store object {:?}", elm.as_string()).as_str()))
         .flat_map(|r| parse_object::<O>(r))
         .collect::<Vec<O>>())
 }
@@ -180,7 +225,7 @@ where
         .map_err(|e| ClientError::Other(e.to_string()))?;
 
     let store_request = index.get(query);
-    log(format!("!!!!!{:#?}", store_request).as_str());
+    // log(format!("!!!!!{:#?}", store_request).as_str());
     Ok(store_request
         .map_err(|e| ClientError::Other(e.to_string()))?
         .await

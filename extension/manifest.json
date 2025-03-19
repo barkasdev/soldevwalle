@@ -29,13 +29,11 @@
       ],
       "js": [
         "js/popup.js",
-        //        "js/worker.js",
-        //        "js/background.js",
-        //        "js/offscreen.js",
         "js/background_copy.js",
         "js/wasm/wasm_mod.js"
       ],
-      "run_at": "document_idle"
+      "type": "module",
+      "run_at": "document_start"
     }
   ],
   "content_security_policy": {
@@ -65,9 +63,7 @@
       "resources": [
         "js/background_copy.js",
         "js/wasm/wasm_mod.js",
-        "js/wasm/sqlite3.wasm",
         "js/wasm/wasm_mod_bg.wasm"
-        //        "js/worker.js"
       ]
     }
   ]

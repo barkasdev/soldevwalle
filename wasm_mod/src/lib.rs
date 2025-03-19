@@ -16,6 +16,8 @@ use wasm_bindgen_futures::future_to_promise;
 use wasm_client_solana::prelude::{FutureExt, TryStreamExt};
 use wasm_client_solana::{SolanaRpcClient, DEVNET};
 use web_sys::{Window, WorkerGlobalScope};
+extern crate console_error_panic_hook;
+use std::panic;
 
 /// Contains the right type of the browser runtime for the current browser
 pub(crate) enum BrowserRuntime {
@@ -29,46 +31,6 @@ pub(crate) enum BrowserRuntime {
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-// #[wasm_bindgen]
-// impl IndexedDb {
-//     #[wasm_bindgen(constructor)]
-//     pub async fn new() -> std::result::Result<IndexedDb, JsValue> {
-//         let window = window().ok_or("No window available")?;
-//         let indexed_db = window.indexed_db()?.ok_or("IndexedDB not available")?;
-//         let request = indexed_db.open("my_database")?;
-//
-//         // Wait for the database to open
-//         // let db = JsFuture::from(request.result().clone()).await?;
-//         // let db: IdbDatabase = db.dyn_into().unwrap();
-//
-//         // Create object store if needed
-//         // if request.ready_state() == IdbRequestReadyState::Pending {
-//         //     let event = request.upgrade_needed_event().unwrap();
-//         //     let db: IdbDatabase = event.target().unwrap().dyn_into().unwrap();
-//         //     db.create_object_store("users")?;
-//         // }
-//
-//         //FIXME
-//         let db = request
-//         Ok(IndexedDb { db })
-//     }
-//
-//     pub async fn insert_user(&self, id: u32, name: String) -> std::result::Result<(), JsValue> {
-//         let tx = self.db.transaction_with_str("users" /*, IdbTransactionMode::Readwrite*/)?;
-//         let store = tx.object_store("users")?;
-//         store.put_with_key(&JsValue::from_str(&name), &JsValue::from_f64(id as f64))?;
-//         Ok(())
-//     }
-//
-//     pub async fn get_user(&self, id: u32) -> std::result::Result<JsValue, JsValue> {
-//         let tx = self.db.transaction_with_str("users" /*, IdbTransactionMode::Readonly*/)?;
-//         let store = tx.object_store("users")?;
-//         let request = store.get(&JsValue::from_f64(id as f64))?;
-//         let result = JsFuture::from(request).await?;
-//         Ok(result)
-//     }
-// }
-
 /// Makes JS `console.log` available in Rust
 #[wasm_bindgen]
 extern "C" {
@@ -76,21 +38,17 @@ extern "C" {
     fn log(s: &str);
 }
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = sqlite3)]
-    pub fn initSqlite3() -> js_sys::Promise;
+#[wasm_bindgen(start)]
+pub fn main() {
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
+    // console_error_panic_hook::set_once();
 }
 
-fn cstr(s: &str) -> CString {
-    CString::new(s).unwrap()
-}
-
-/// A demo function to test if WASM is callable from background.js
 #[wasm_bindgen]
 pub async fn init_wasm(wallet_store_password: String) {
-    client::seed_temp_data(wallet_store_password).await;
-    // let db = db::create_database().await;
+    log("Initializing wasm...");
+    // let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
+    client::seed_initial_data(wallet_store_password).await;
     // match db {
     //     Ok(db) => {
     //         if let Err(db_err) = db::try_seed_data(&db).await {
@@ -101,24 +59,24 @@ pub async fn init_wasm(wallet_store_password: String) {
     //         log(&format!("error creating database: {}", db_err));
     //     }
     // }
+    
+    // let client = SolanaRpcClient::new(DEVNET);
+    // let address = pubkey!("GDX3G2D84Mj99XGMkVrp9vsHUHTzzuW7uh5tHrpehKbQ");
+    // // log("requesting airdrop");
+    // // client
+    // //     .request_airdrop(&address, sol_to_lamports(1.0))
+    // //     .await.unwrap();
+    // let account = client.get_account(&address).await;
+    // // let drop = client.request_airdrop(&address, sol_to_lamports(1.0)).await;
+    // log(format!("{account:#?}").as_str());
 
-    let client = SolanaRpcClient::new(DEVNET);
-    let address = pubkey!("GDX3G2D84Mj99XGMkVrp9vsHUHTzzuW7uh5tHrpehKbQ");
-    // log("requesting airdrop");
-    // client
-    //     .request_airdrop(&address, sol_to_lamports(1.0))
-    //     .await.unwrap();
-    let account = client.get_account(&address).await;
-    // let drop = client.request_airdrop(&address, sol_to_lamports(1.0)).await;
-    log(format!("{account:#?}").as_str());
+    // let _networks = get_networks().await;
+    // log(format!("(init_wasm) networks: {:#?}", _networks).as_str());
 
-    let _networks = get_networks().await;
-    // log(format!("{:#?}", networks).as_str());
-
-    let _wallets = get_wallets().await;
+    // let _wallets = get_wallets().await;
     // log(format!("{:#?}", wallets).as_str());
 
-    log("init WASM!");
+    log("init Wasm end");
 }
 
 /// The main entry point callable from `background.js`.
