@@ -1,8 +1,9 @@
-import initWasmModule, { init_wasm, get_networks, report_state, get_wallets, get_networks_async } from './wasm/wasm_mod.js';
+import initWasmModule, { init_wasm, report_state, get_wallets, get_networks_async } from './wasm/wasm_mod.js';
 
 
 (async () => {
     await initWasmModule();
+    console.log("wasm initialized");
     await init_wasm('password'); // this call logs a hello message from WASM for demo purposes
     report_state("wasm initialized");
     try {
