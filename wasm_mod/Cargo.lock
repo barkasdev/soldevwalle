@@ -3577,6 +3577,8 @@ dependencies = [
  "aes-gcm",
  "anyhow",
  "console_error_panic_hook",
+ "futures",
+ "futures-util",
  "getrandom 0.3.1",
  "hex",
  "idb",

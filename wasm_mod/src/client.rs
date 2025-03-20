@@ -195,7 +195,7 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult
 }
 
 pub async fn seed_initial_data(wallet_store_password: String) {
-    // log("seed_initial_data");
+    log("seed_initial_data");
     let database = db::open_database()
         .await
         .inspect_err(|err| log(&format!("error opening db: {:?}", err)));
@@ -214,6 +214,7 @@ pub async fn seed_initial_data(wallet_store_password: String) {
     // let networks = get_networks().await;
     // log(format!("(seed_initial_data) networks: {:#?}", networks).as_str());
 
+    log("creating wallets");
     // create test wallets if they don't exist in the db
     let wallets = get_all_store_objects::<MyWallet>("wallets").await;
     let mut existing_names = match wallets {
@@ -223,7 +224,7 @@ pub async fn seed_initial_data(wallet_store_password: String) {
             .collect::<Vec<String>>(),
         Err(_) => Vec::new(),
     };
-    log(format!("{:?}", existing_names).as_str());
+    log(format!("wallets in db: {:?}", existing_names).as_str());
     //up to 4 pcs
     let missing_wallets_count = 4 - existing_names.len();
 

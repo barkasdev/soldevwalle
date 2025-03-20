@@ -1,3 +1,4 @@
+extern crate console_error_panic_hook;
 #[macro_use]
 mod client;
 mod api_wrappers;
@@ -5,19 +6,14 @@ mod constants;
 mod db;
 mod models;
 
-use crate::models::MyNetwork;
 use constants::log;
 use js_sys::Promise;
-use solana_sdk::pubkey;
-use std::ffi::CString;
+use std::panic;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
-use wasm_client_solana::prelude::{FutureExt, TryStreamExt};
-use wasm_client_solana::{SolanaRpcClient, DEVNET};
+use wasm_client_solana::prelude::{FutureExt, StreamExt, TryFutureExt, TryStreamExt};
 use web_sys::{Window, WorkerGlobalScope};
-extern crate console_error_panic_hook;
-use std::panic;
 
 /// Contains the right type of the browser runtime for the current browser
 pub(crate) enum BrowserRuntime {
@@ -59,7 +55,7 @@ pub async fn init_wasm(wallet_store_password: String) {
     //         log(&format!("error creating database: {}", db_err));
     //     }
     // }
-    
+
     // let client = SolanaRpcClient::new(DEVNET);
     // let address = pubkey!("GDX3G2D84Mj99XGMkVrp9vsHUHTzzuW7uh5tHrpehKbQ");
     // // log("requesting airdrop");
@@ -104,34 +100,58 @@ pub async fn report_state(msg: &str) {
 }
 
 //get list of networks
-#[wasm_bindgen]
-pub async fn get_networks() {
-    //TODO implement switching active network and updating in db
-    let networks = client::get_networks().await;
-    // log(format!("get_networks: {:#?}", networks).as_str());
-    report_progress(&*serde_json::to_string_pretty(&networks).unwrap());
-}
-#[wasm_bindgen]
-pub async fn get_networks_sync() -> Vec<MyNetwork> {
-    client::get_networks().await
-}
+// #[wasm_bindgen]
+// pub async fn get_networks() {
+//     //TODO implement switching active network and updating in db
+//     let networks = client::get_networks().await;
+//     // log(format!("get_networks: {:#?}", networks).as_str());
+//     report_progress(&*serde_json::to_string_pretty(&networks).unwrap());
+// }
+// #[wasm_bindgen]
+// pub async fn get_networks_sync() -> Vec<MyNetwork> {
+//     client::get_networks().await
+// }
 
+//get list of networks
 #[wasm_bindgen]
 pub async fn get_networks_async() -> Promise {
     future_to_promise(client::get_networks_async())
 }
 
 #[wasm_bindgen]
-pub async fn set_active_network(name: String) {
-    let res = client::set_active_network(name).await;
-    report_progress(&*serde_json::to_string_pretty(&res).unwrap());
+pub async fn set_active_network(name: String) -> Promise {
+    let res = client::set_active_network(name)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
+        .map_ok(|v| JsValue::from(v));
+    // report_progress(&*serde_json::to_string_pretty(&res).unwrap());
+    future_to_promise(res)
 }
 
 #[wasm_bindgen]
-pub async fn get_wallets() {
-    let wallets = client::get_wallets().await;
-    // log(format!("get_wallets: {:#?}", wallets).as_str());
-    report_progress(&*serde_json::to_string_pretty(&wallets).unwrap());
+pub async fn get_wallets() -> Promise {
+    use futures::future::FutureExt;
+    // let wallets = client::get_wallets().await;
+    //
+    // let wallets = wallets
+    //     .iter()
+    //     .map(|w| serde_wasm_bindgen::to_value(&w).unwrap())
+    //     .collect::<Vec<_>>();
+    // let wallets = JsValue::from(wallets);
+
+    let f_wallets = client::get_wallets()
+        .map(|wallets| {
+            wallets
+                .iter()
+                .map(|w| serde_wasm_bindgen::to_value(&w).unwrap())
+                .collect::<Vec<_>>()
+        })
+        // Convert the Vec<JsValue> to JsValue (Array)
+        .map(|wallets| JsValue::from(wallets))
+        .map(Result::<JsValue>::Ok)
+        .map_err(|e| JsValue::from_str("Error getting wallets"));
+    future_to_promise(f_wallets)
+    // report_progress(&*serde_json::to_string_pretty(&wallets).unwrap());
+    // future_to_promise(async move { Ok(wallets) })
 }
 
 #[wasm_bindgen]
@@ -151,14 +171,8 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
 }
 
 #[wasm_bindgen]
-pub async fn send_sol(
-    from_pubkey: &str,
-    to_pubkey: &str,
-    sol: f64,
-    wallet_store_password: String,
-) {
-    let send_result =
-        client::send_sol(from_pubkey, to_pubkey, sol, wallet_store_password).await;
+pub async fn send_sol(from_pubkey: &str, to_pubkey: &str, sol: f64, wallet_store_password: String) {
+    let send_result = client::send_sol(from_pubkey, to_pubkey, sol, wallet_store_password).await;
     report_progress(&*serde_json::to_string_pretty(&send_result).unwrap());
 }
 

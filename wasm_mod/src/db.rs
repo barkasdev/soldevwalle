@@ -6,7 +6,6 @@ use idb::{
 };
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::Wallet;
 use wasm_client_solana::{ClientError, ClientResult};
@@ -106,7 +105,13 @@ pub async fn create_database() -> Result<Database, Error> {
 }
 
 pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
-    // log("try seed networks");
+    log("try seed networks");
+    let network_addresses_in_db = get_all_store_objects::<MyNetwork>("networks")
+        .await
+        .unwrap_or(Vec::new())
+        .iter()
+        .map(|n| n.address())
+        .collect::<Vec<_>>();
     let hardcoded_networks = vec![
         MyNetwork::new(
             0,
@@ -139,6 +144,11 @@ pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
             false,
         ),
     ];
+    let hardcoded_networks = hardcoded_networks
+        .iter()
+        .filter(|&hn| !network_addresses_in_db.contains(&hn.address()))
+        .collect::<Vec<&MyNetwork>>();
+    log(format!("Adding missing networks: {:?}", hardcoded_networks).as_str());
     let store_name = "networks";
     for network in &hardcoded_networks {
         let transaction = db.transaction(&[store_name], TransactionMode::ReadWrite)?;
@@ -158,8 +168,7 @@ pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
                 log(format!("error adding network '{:?}': {:?}", &network, e).as_str())
             });
         */
-        store
-            .add(&serialized_value, None)?;
+        store.add(&serialized_value, None)?;
 
         transaction.commit()?.await.inspect_err(|e| {
             log(format!("error committing network '{:?}'", e).as_str());
