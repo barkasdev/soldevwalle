@@ -9,18 +9,19 @@ import { Link } from 'react-router-dom';
 
 
 const WalletPage: React.FC = () => {
+    const [selectedNetwork, setSelectedNetwork] = useState<string>('');
+    const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+    
 
     return (
         <div className="container flex flex-col items-center text-white p-4">
             {/* Header */}
             <div className="w-full fixed top-0 left-0 p-4 flex justify-between items-center z-10">
                 {/* Left Side - Network Selector */}
-               <NetworkDropdown onNetworkSelect={function (networkName: string): void {
-                    throw new Error('Function not implemented.');
-                } }/>
+               <NetworkDropdown onNetworkSelect={setSelectedNetwork} />
 
                 {/* Account Dropdown */}
-                <AccountDropdown />
+                <AccountDropdown onWalletSelect={(walletName) => setSelectedWallet(walletName)} />
 
                 {/* Search Bar Component */}
                 <SearchBar />
