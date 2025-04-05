@@ -18,20 +18,17 @@ const NetworkDropdown: React.FC<Props> = ({ onNetworkSelect }) => {
     const [selectedNetwork, setSelectedNetwork] = useState<string>("");
 
     useEffect(() => {
-        const fetchNetworks = async () => {
-            chrome.runtime.sendMessage({ type: "GET_NETWORKS" }, (response) => {
-                if (response && response.networks) {
-                    console.log("WalletPage - Received Networks:", response.networks);
-                    setNetworks(response.networks);
-                    const activeNetwork = response.networks.find((net: { active: any; }) => net.active);
-                    if (activeNetwork) setSelectedNetwork(activeNetwork.name);
-                } else {
-                    console.error("WalletPage - No Networks Received");
-                }
-            });
-        };
-
-        fetchNetworks();
+        // Request networks from background.js
+        chrome.runtime.sendMessage({ type: "GET_NETWORKS" }, (response) => {
+            if (response && response.networks) {
+                console.log("WalletPage - Received Networks:", response.networks);
+                setNetworks(response.networks);
+                const activeNetwork = response.networks.find((net: { active: any; }) => net.active);
+                if (activeNetwork) setSelectedNetwork(activeNetwork.name);
+            } else {
+                console.error("WalletPage - No Networks Received");
+            }
+        });
     }, []);
 
     const handleNetworkSelect = (networkName: string) => {
