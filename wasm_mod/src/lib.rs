@@ -12,7 +12,7 @@ use std::panic;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
-use wasm_client_solana::prelude::{FutureExt, StreamExt, TryFutureExt, TryStreamExt};
+use wasm_client_solana::prelude::TryFutureExt;
 use web_sys::{Window, WorkerGlobalScope};
 
 /// Contains the right type of the browser runtime for the current browser
@@ -122,7 +122,7 @@ pub async fn get_networks_async() -> Promise {
 pub async fn set_active_network(name: String) -> Promise {
     let res = client::set_active_network(name)
         .map_err(|e| JsValue::from_str(&e.to_string()))
-        .map_ok(|v| JsValue::from(v));
+        .map_ok(JsValue::from);
     // report_progress(&*serde_json::to_string_pretty(&res).unwrap());
     future_to_promise(res)
 }
@@ -146,9 +146,9 @@ pub async fn get_wallets() -> Promise {
                 .collect::<Vec<_>>()
         })
         // Convert the Vec<JsValue> to JsValue (Array)
-        .map(|wallets| JsValue::from(wallets))
+        .map(JsValue::from)
         .map(Result::<JsValue>::Ok)
-        .map_err(|e| JsValue::from_str("Error getting wallets"));
+        .map_err(|_| JsValue::from_str("Error getting wallets"));
     future_to_promise(f_wallets)
     // report_progress(&*serde_json::to_string_pretty(&wallets).unwrap());
     // future_to_promise(async move { Ok(wallets) })
@@ -161,19 +161,19 @@ pub async fn create_wallet(wallet_name: String, wallet_store_password: String) {
         Ok(v) => v.as_string().unwrap_or(String::from("No wallet data")),
         Err(e) => e.to_string(),
     };
-    report_progress(&*serde_json::to_string(&created_result).unwrap());
+    report_progress(&serde_json::to_string(&created_result).unwrap());
 }
 
 #[wasm_bindgen]
 pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
     let airdrop = client::request_airdrop(to_pubkey, sol_quantity).await;
-    report_progress(&*serde_json::to_string_pretty(&airdrop).unwrap());
+    report_progress(&serde_json::to_string_pretty(&airdrop).unwrap());
 }
 
 #[wasm_bindgen]
 pub async fn send_sol(from_pubkey: &str, to_pubkey: &str, sol: f64, wallet_store_password: String) {
     let send_result = client::send_sol(from_pubkey, to_pubkey, sol, wallet_store_password).await;
-    report_progress(&*serde_json::to_string_pretty(&send_result).unwrap());
+    report_progress(&serde_json::to_string_pretty(&send_result).unwrap());
 }
 
 /// This is a proxy for report_progress() in progress.js

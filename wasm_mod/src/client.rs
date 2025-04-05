@@ -65,7 +65,7 @@ pub async fn get_wallets() -> Vec<MyWallet> {
     for wallet in wallets.iter_mut() {
         //get account balance
         wallet.account_info = Some(
-            get_balance(&wallet.pubkey.as_str())
+            get_balance(wallet.pubkey.as_str())
                 .await
                 .unwrap_or_default(),
         );
@@ -131,11 +131,14 @@ pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
     if let Some(network) = network_name {
         let client = SolanaRpcClient::new(network.as_str());
         let address = Pubkey::from_str(for_pubkey).unwrap();
+        log(&network.to_string());
         let balance = client.get_balance(&address).await?;
+        log(&balance.to_string());
         let tokens = client.get_token_account_balance(&address).await?;
+        log(&tokens.real_number_string());
         Ok(MyBalance {
-            balance: Some(balance),
-            tokens: Some(tokens),
+            balance: balance,
+            tokens: format!("{}__{}", tokens.amount, tokens.ui_amount_string),
         })
     } else {
         Err(ClientError::Other("Can't get active network".to_string()))
@@ -180,7 +183,7 @@ pub async fn send_sol(
 
 pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult<Signature> {
     let network_name = get_active_network().await.map(|n| n.address());
-    if let None = network_name {
+    if network_name.is_none() {
         return Err(ClientError::Other("Can't get active network".to_string()));
     }
     let client = SolanaRpcClient::new(network_name.unwrap().as_str());

@@ -8,8 +8,8 @@ pub struct IgnoredData {}
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct MyBalance {
-    pub balance: Option<u64>,
-    pub tokens: Option<UiTokenAmount>,
+    pub balance: u64,
+    pub tokens: String, // UiTokenAmount, //TODO
 }
 
 #[derive(Serialize, Deserialize, Debug)]
