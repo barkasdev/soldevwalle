@@ -1,7 +1,8 @@
-import initWasmModule, { init_wasm, report_state, get_wallets, get_networks_async } from './wasm/wasm_mod.js';
+import initWasmModule, { init_wasm, report_state, get_wallets, get_networks_async, set_active_network, send_sol, request_airdrop } from './wasm/wasm_mod.js';
 
 let storedNetworks = [];
 let storedWallets = [];
+
 
 (async () => {
     await initWasmModule();
@@ -32,11 +33,19 @@ let storedWallets = [];
         return true; // Keeps the response channel open for async responses
     });
 
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
+            const url = tabs[0].url;
+            console.log("Current tab URL:", url);
+        } else {
+            console.log("No active tab found.");
+        }
+    });
+
     console.log("The networks are:", storedNetworks);
     console.log("The wallets are:", storedWallets);
 })();
 
-//  Function to fetch networks
 async function fetchNetworks() {
     try {
         const networks = await get_networks_async();
@@ -48,7 +57,6 @@ async function fetchNetworks() {
     }
 }
 
-// ✅ Function to fetch wallets
 async function fetchWallets() {
     try {
         const wallets = await get_wallets();
@@ -59,3 +67,5 @@ async function fetchWallets() {
         storedWallets = [];
     }
 }
+
+

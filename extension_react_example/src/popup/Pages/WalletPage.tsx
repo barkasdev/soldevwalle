@@ -11,14 +11,21 @@ import { Link } from 'react-router-dom';
 const WalletPage: React.FC = () => {
     const [selectedNetwork, setSelectedNetwork] = useState<string>('');
     const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
-    
+    //check wallet tab
+    useEffect(() => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]) {
+                console.log("Current tab URL:", tabs[0].url);
+            }
+        });
+    }, []);
 
     return (
         <div className="container flex flex-col items-center text-white p-4">
             {/* Header */}
             <div className="w-full fixed top-0 left-0 p-4 flex justify-between items-center z-10">
                 {/* Left Side - Network Selector */}
-               <NetworkDropdown onNetworkSelect={setSelectedNetwork} />
+                <NetworkDropdown onNetworkSelect={setSelectedNetwork} />
 
                 {/* Account Dropdown */}
                 <AccountDropdown onWalletSelect={(walletName) => setSelectedWallet(walletName)} />
