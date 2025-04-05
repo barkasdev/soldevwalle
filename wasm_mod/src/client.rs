@@ -131,11 +131,8 @@ pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
     if let Some(network) = network_name {
         let client = SolanaRpcClient::new(network.as_str());
         let address = Pubkey::from_str(for_pubkey).unwrap();
-        log(&network.to_string());
         let balance = client.get_balance(&address).await?;
-        log(&balance.to_string());
         let tokens = client.get_token_account_balance(&address).await?;
-        log(&tokens.real_number_string());
         Ok(MyBalance {
             balance: balance,
             tokens: format!("{}__{}", tokens.amount, tokens.ui_amount_string),
