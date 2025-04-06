@@ -73,6 +73,23 @@ let storedWallets = [];
                     }
                     break;
 
+                case "SEND_SOL":
+                    try {
+                        const { from_pubkey, to_pubkey, amount, wallet_store_password } = request;
+                        console.log(`Sending ${amount} SOL from ${from_pubkey} to ${to_pubkey}`);
+
+                        await initWasmModule();
+                        const result = await send_sol(from_pubkey, to_pubkey, amount, wallet_store_password);
+
+                        console.log("SEND_SOL success:", result);
+                        sendResponse({ success: true, message: "Transaction complete", result });
+                    } catch (error) {
+                        console.error("SEND_SOL error:", error);
+                        sendResponse({ success: false, message: "Transaction failed", error });
+                    }
+                    break;
+
+
                 default:
                     console.warn("Unknown request type:", request.type);
                     sendResponse({ success: false, message: "Unknown request type" });

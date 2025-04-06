@@ -1,8 +1,76 @@
-import React from 'react'
-import { FaSearch, FaBars, FaPaperPlane } from 'react-icons/fa'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { FaSearch, FaBars } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
-const SendTokensPage: React.FC = () => {
+const SendTokens: React.FC = () => {
+  const [fromPubkey, setFromPubkey] = useState('');
+  const [toPubkey, setToPubkey] = useState('');
+  const [amount, setAmount] = useState('');
+  const [password, setPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+
+  // Get default "from" pubkey from selected wallet
+  useEffect(() => {
+    chrome.storage.local.get(['selectedWallet'], (result) => {
+      if (result?.selectedWallet) {
+        setFromPubkey(result.selectedWallet.pubkey);
+      }
+    });
+  }, []);
+
+
+  const handleSend = () => {
+    if (!fromPubkey || !toPubkey || !amount || !password) {
+      setStatus('error');
+      setMessage('Please fill in all fields.');
+      return;
+    }
+
+    setStatus('loading');
+    setMessage('Sending SOL...');
+
+    chrome.runtime.sendMessage(
+      {
+        type: 'SEND_SOL',
+        from_pubkey: fromPubkey,
+        to_pubkey: toPubkey,
+        amount: parseFloat(amount),
+        wallet_store_password: password,
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          setStatus('error');
+          setMessage(`Error: ${chrome.runtime.lastError.message}`);
+          return;
+        }
+
+        if (response?.success) {
+          setStatus('success');
+          setMessage('Transaction successful!');
+        } else {
+          setStatus('error');
+          setMessage(`Transaction failed: ${response?.message || 'Unknown error'}`);
+        }
+      }
+    );
+  };
+
+  const handleBack = () => {
+    chrome.storage.local.get(["selectedWallet", "selectedNetwork"], (result) => {
+      if (result.selectedWallet) {
+        chrome.storage.local.set({ selectedWallet: result.selectedWallet });
+      }
+      if (result.selectedNetwork) {
+        chrome.storage.local.set({ selectedNetwork: result.selectedNetwork });
+      }
+
+      navigate("/wallet");
+    });
+  };
+
   return (
     <div className="container flex flex-col items-center text-white p-4">
       {/* Header */}
@@ -12,46 +80,70 @@ const SendTokensPage: React.FC = () => {
         <FaSearch className="text-2xl" />
       </div>
 
-      {/* Content */}
-      <div className="pt-16 text-center flex flex-col items-center gap-4">
-        {/* Send Icon */}
-        <FaPaperPlane className="text-5xl text-white" />
-
-        {/* Amount */}
-        <h1 className="text-3xl font-bold">0.0008 SOL</h1>
-
-        {/* Transaction Details */}
-        <div className="w-full mt-4">
-          <div className="flex justify-between text-lg">
-            <span className="text-gray-400">To</span>
-            <span className="font-medium italic">*Recipient*</span>
-          </div>
-          <div className="flex justify-between text-lg mt-2">
-            <span className="text-gray-400">Network</span>
-            <span className="font-medium italic">*Network*</span>
-          </div>
-          <div className="flex justify-between text-lg mt-2">
-            <span className="text-gray-400 mr-2">Network Fee</span>
-            <span className="font-medium"> 0.00001 SOL</span>
-          </div>
-        </div>
+      <div className="pt-16 text-center">
+        <h1 className="text-2xl font-bold">Send SOL</h1>
       </div>
 
-      {/* Buttons */}
-      <div className="w-full flex justify-between mt-6">
-        <Link
-          to="/wallet"
-          className="w-[45%] text-center py-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 shadow-md text-white font-bold hover:scale-105 transition-transform duration-200"
+      {/* Input Fields */}
+      <div className="w-full flex flex-col mt-6 gap-4 px-4">
+        <input
+          type="text"
+          value={fromPubkey}
+          onChange={(e) => setFromPubkey(e.target.value)}
+          placeholder="Sender's public key"
+          className="p-2 rounded bg-white/10 text-white placeholder-gray-400 outline-none"
+        />
+        <input
+          type="text"
+          value={toPubkey}
+          onChange={(e) => setToPubkey(e.target.value)}
+          placeholder="Recipient's public key"
+          className="p-2 rounded bg-white/10 text-white placeholder-gray-400 outline-none"
+        />
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="Amount (SOL)"
+          className="p-2 rounded bg-white/10 text-white placeholder-gray-400 outline-none"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Wallet password"
+          className="p-2 rounded bg-white/10 text-white placeholder-gray-400 outline-none"
+        />
+
+        <button
+          onClick={handleSend}
+          disabled={status === 'loading'}
+          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50"
+        >
+          {status === 'loading' ? 'Sending...' : 'Send SOL'}
+        </button>
+
+        {message && (
+          <div
+            className={`text-sm mt-2 ${status === 'success' ? 'text-green-400' : status === 'error' ? 'text-red-400' : 'text-white'
+              }`}
+          >
+            {message}
+          </div>
+        )}
+      </div>
+
+      {/* Back Button */}
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center p-4">
+        <button
+          onClick={handleBack}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
         >
           Back
-        </Link>
-        <button className="w-[45%] py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 shadow-md text-white font-bold hover:scale-105 transition-transform duration-200">
-          Next
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SendTokensPage
-
+export default SendTokens;

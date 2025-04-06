@@ -36,6 +36,7 @@ const AccountDropdown: React.FC<Props> = ({ onWalletSelect }) => {
         setSelectedWallet(wallet);
         setIsOpen(false);
         if (onWalletSelect) onWalletSelect(wallet.name); // Notify WalletPage
+        chrome.storage.local.set({ selectedWallet: wallet });
     };
 
     return (

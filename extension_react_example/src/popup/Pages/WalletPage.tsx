@@ -10,15 +10,19 @@ import { Link } from 'react-router-dom';
 
 const WalletPage: React.FC = () => {
     const [selectedNetwork, setSelectedNetwork] = useState<string>('');
-    const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+    const [selectedWallet, setSelectedWallet] = useState<any>(null);
     //check wallet tab
     useEffect(() => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs[0]) {
-                console.log("Current tab URL:", tabs[0].url);
+        chrome.storage.local.get(['selectedWallet', 'selectedNetwork'], (result) => {
+            if (result?.selectedWallet) {
+                setSelectedWallet(result.selectedWallet);
+            }
+            if (result?.selectedNetwork) {
+                setSelectedNetwork(result.selectedNetwork.name || result.selectedNetwork); // depends on how you stored it
             }
         });
     }, []);
+
 
     return (
         <div className="container flex flex-col items-center text-white p-4">
@@ -36,7 +40,9 @@ const WalletPage: React.FC = () => {
 
             {/* Balance */}
             <div className="pt-6 text-center">
-                <h1 className="text-5xl font-bold">$0.00</h1>
+                <h1 className="text-5xl font-bold"> {selectedWallet?.account_info?.balance != null
+                    ? `$${selectedWallet.account_info.balance.toFixed(2)}`
+                    : '$0.00'}</h1>
                 <p className="text-sm text-gray-400 mt-2">+ $0.00 + 0.00%</p>
             </div>
 

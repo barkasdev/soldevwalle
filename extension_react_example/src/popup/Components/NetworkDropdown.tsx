@@ -36,11 +36,17 @@ const NetworkDropdown: React.FC<Props> = ({ onNetworkSelect }) => {
             ...net,
             active: net.name === networkName,
         }));
+
+        const selected = updatedNetworks.find((n) => n.name === networkName);
     
         setNetworks(updatedNetworks);
         setSelectedNetwork(networkName);
         setDropdownOpen(false);
         onNetworkSelect(networkName);
+
+        if (selected) {
+            chrome.storage.local.set({ selectedNetwork: selected });
+        }
     
         //  Send message to background to set active network
         chrome.runtime.sendMessage(
