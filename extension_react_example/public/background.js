@@ -21,45 +21,52 @@ let storedWallets = [];
         await fetchWallets();
     });
 
-    //  Listen for messages from React (Popup/Wallet Page)
+    //  Listen for messages from React 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.type === "GET_NETWORKS") {
-            console.log("Background - Sending Networks:", storedNetworks);
-            sendResponse({ networks: storedNetworks });
-        } else if (request.type === "GET_WALLETS") {
-            console.log("Background - Sending Wallets:", storedWallets);
-            sendResponse({ wallets: storedWallets });
-        } 
-        return true; // Keeps the response channel open for async responses
+        (async () => {
+            switch (request.type) {
+                case "GET_NETWORKS":
+                    console.log("Background - Sending Networks:", storedNetworks);
+                    sendResponse({ networks: storedNetworks });
+                    break;
+
+                case "GET_WALLETS":
+                    console.log("Background - Sending Wallets:", storedWallets);
+                    sendResponse({ wallets: storedWallets });
+                    break;
+
+                case "SET_NETWORK":
+                    try {
+                        await initWasmModule(); // Safe re-init in case service worker restarted
+                        const selectedName = request.networkName;
+
+                        console.log("Background - Calling set_active_network for:", selectedName);
+                        const result = await set_active_network(selectedName);
+
+                        // Update local state
+                        storedNetworks = storedNetworks.map((net) => ({
+                            ...net,
+                            active: net.name === selectedName,
+                        }));
+
+                        console.log("WASM set_active_network success:", result);
+                        sendResponse({ success: true, message: "Network updated", result });
+                    } catch (error) {
+                        console.error("WASM set_active_network error:", error);
+                        sendResponse({ success: false, message: "Failed to update network", error });
+                    }
+                    break;
+
+                default:
+                    console.warn("Unknown request type:", request.type);
+                    sendResponse({ success: false, message: "Unknown request type" });
+            }
+        })();
+
+        return true; // Required for async sendResponse
     });
-
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.type === "SET_NETWORK") {
-            const selectedName = request.networkName;
-
-            console.log("Background - Calling set_active_network for:", selectedName);
-
-            //  Call the async WASM function
-            set_active_network(selectedName)
-                .then((res) => {
-                    console.log("WASM set_active_network success:", res);
-
-                    // Optionally update local copy of networks
-                    storedNetworks = storedNetworks.map((net) => ({
-                        ...net,
-                        active: net.name === selectedName,
-                    }));
-
-                    sendResponse({ success: true, message: "Network updated", result: res });
-                })
-                .catch((error) => {
-                    console.error("WASM set_active_network error:", error);
-                    sendResponse({ success: false, message: "Failed to update network", error });
-                });
-
-            return true; // Keep message channel open for async response
-        }
-    });
+    
+    
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs.length > 0) {
