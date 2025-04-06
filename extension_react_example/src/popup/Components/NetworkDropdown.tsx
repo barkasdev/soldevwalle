@@ -34,14 +34,30 @@ const NetworkDropdown: React.FC<Props> = ({ onNetworkSelect }) => {
     const handleNetworkSelect = (networkName: string) => {
         const updatedNetworks = networks.map((net) => ({
             ...net,
-            active: net.name === networkName, // Set only the selected one as active
+            active: net.name === networkName,
         }));
-
+    
         setNetworks(updatedNetworks);
         setSelectedNetwork(networkName);
         setDropdownOpen(false);
         onNetworkSelect(networkName);
+    
+        //  Send message to background to set active network
+        chrome.runtime.sendMessage(
+            {
+                type: "SET_NETWORK",
+                networkName: networkName, // pass the selected network
+            },
+            (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("SET_NETWORK failed:", chrome.runtime.lastError.message);
+                } else {
+                    console.log("SET_NETWORK response:", response);
+                }
+            }
+        );
     };
+    
 
     return (
         <div className="relative">

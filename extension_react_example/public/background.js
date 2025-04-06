@@ -29,8 +29,36 @@ let storedWallets = [];
         } else if (request.type === "GET_WALLETS") {
             console.log("Background - Sending Wallets:", storedWallets);
             sendResponse({ wallets: storedWallets });
-        }
+        } 
         return true; // Keeps the response channel open for async responses
+    });
+
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.type === "SET_NETWORK") {
+            const selectedName = request.networkName;
+
+            console.log("Background - Calling set_active_network for:", selectedName);
+
+            //  Call the async WASM function
+            set_active_network(selectedName)
+                .then((res) => {
+                    console.log("WASM set_active_network success:", res);
+
+                    // Optionally update local copy of networks
+                    storedNetworks = storedNetworks.map((net) => ({
+                        ...net,
+                        active: net.name === selectedName,
+                    }));
+
+                    sendResponse({ success: true, message: "Network updated", result: res });
+                })
+                .catch((error) => {
+                    console.error("WASM set_active_network error:", error);
+                    sendResponse({ success: false, message: "Failed to update network", error });
+                });
+
+            return true; // Keep message channel open for async response
+        }
     });
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
