@@ -38,15 +38,15 @@ let storedWallets = [];
                 case "SET_NETWORK":
                     try {
                         await initWasmModule(); // Safe re-init in case service worker restarted
-                        const selectedName = request.networkName;
+                        const networkName = request.networkName;
 
-                        console.log("Background - Calling set_active_network for:", selectedName);
-                        const result = await set_active_network(selectedName);
+                        console.log("Background - Calling set_active_network for:", networkName);
+                        const result = await set_active_network(networkName);
 
                         // Update local state
                         storedNetworks = storedNetworks.map((net) => ({
                             ...net,
-                            active: net.name === selectedName,
+                            active: net.name === networkName,
                         }));
 
                         console.log("WASM set_active_network success:", result);
@@ -54,6 +54,22 @@ let storedWallets = [];
                     } catch (error) {
                         console.error("WASM set_active_network error:", error);
                         sendResponse({ success: false, message: "Failed to update network", error });
+                    }
+                    break;
+
+                case "REQUEST_AIRDROP":
+                    try {
+                        const { to_pubkey, amount } = request;
+                        console.log(`Requesting airdrop to ${to_pubkey} with ${amount} SOL`);
+
+                        await initWasmModule(); // Ensure WASM is loaded
+                        const result = await request_airdrop(to_pubkey, amount);
+
+                        console.log("Airdrop success:", result);
+                        sendResponse({ success: true, message: "Airdrop requested", result });
+                    } catch (error) {
+                        console.error("Airdrop error:", error);
+                        sendResponse({ success: false, message: "Airdrop failed", error });
                     }
                     break;
 
@@ -65,8 +81,8 @@ let storedWallets = [];
 
         return true; // Required for async sendResponse
     });
-    
-    
+
+
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs.length > 0) {
