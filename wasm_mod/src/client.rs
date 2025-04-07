@@ -94,6 +94,7 @@ pub async fn set_active_network(network_name: String) -> ClientResult<Option<MyN
         Query::Key(JsValue::from_str(&network_name)),
     )
     .await?;
+    log(&format!("set active from {:?} to {}", &changing_network, &network_name));
     if last_active_network.is_none() || changing_network.is_none() {
         Err(ClientError::Other(
             "Can't get active network or network to be set active".to_string(),
