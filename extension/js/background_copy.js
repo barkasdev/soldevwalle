@@ -1,7 +1,7 @@
 // A static import is required in b/g scripts because they are executed in their own env
 // not connected to the content scripts where wasm is loaded automatically
-import initWasmModule from './wasm/wasm_mod.js';
-import {init_wasm, report_state} from './wasm/wasm_mod.js';
+import initWasmModule, {get_wallets} from './wasm/wasm_mod.js';
+import {init_wasm, report_state, set_active_network, get_networks_async} from './wasm/wasm_mod.js';
 
 
 console.log("Background script started");
@@ -18,6 +18,16 @@ console.log("Background script started");
     console.log("initWasmModule success");
 
     await init_wasm("test-password");
+    console.log("initWasmModule done");
+    // let nas = await get_networks_async();
+    // console.log("nas", nas);
+    console.log("123");
+    let wallets = await get_wallets();
+    console.log("wallets", wallets);
+    await set_active_network("TESTNET");
+    let nas = await get_networks_async();
+    console.log("nas", nas);
+    console.log("234");
     await report_state("wasm initialized");
 })();
 
