@@ -9,7 +9,9 @@ let storedWallets = [];
     console.log("wasm initialized");
     await init_wasm('password'); // Logs a hello message from WASM
     report_state("wasm initialized");
+    
 
+    
     // Fetch data immediately when the script runs
     await fetchNetworks();
     await fetchWallets();
@@ -37,7 +39,6 @@ let storedWallets = [];
 
                 case "SET_NETWORK":
                     try {
-                        await initWasmModule(); // Safe re-init in case service worker restarted
                         const networkName = request.networkName;
 
                         console.log("Background - Calling set_active_network for:", networkName);
@@ -62,7 +63,6 @@ let storedWallets = [];
                         const { to_pubkey, amount } = request;
                         console.log(`Requesting airdrop to ${to_pubkey} with ${amount} SOL`);
 
-                        await initWasmModule(); // Ensure WASM is loaded
                         const result = await request_airdrop(to_pubkey, amount);
 
                         console.log("Airdrop success:", result);

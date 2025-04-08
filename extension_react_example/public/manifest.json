@@ -8,20 +8,27 @@
     "scripting",
     "offscreen",
     "activeTab",
-    "tabs"
+    "tabs",
+    "identity"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
+  "oauth2": {
+    "client_id": "Ov23li1hawvNYdMjLzkZ",
+    "scopes": [
+      "read:user",
+      "user:email"
+    ]
+  },
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
- "content_security_policy": {
-  "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self';",
-  "sandbox": "sandbox allow-scripts; default-src 'self' 'wasm-unsafe-eval'; frame-src 'self'; worker-src 'self';"
-}
-,
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self';",
+    "sandbox": "sandbox allow-scripts; default-src 'self' 'wasm-unsafe-eval'; frame-src 'self'; worker-src 'self';"
+  },
   "content_scripts": [
     {
       "matches": [
