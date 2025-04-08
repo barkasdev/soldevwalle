@@ -15,7 +15,7 @@
     "<all_urls>"
   ],
   "oauth2": {
-    "client_id": "YOUR_GITHUB_CLIENT_ID",
+    "client_id": "Ov23li1hawvNYdMjLzkZ",
     "scopes": [
       "read:user",
       "user:email"

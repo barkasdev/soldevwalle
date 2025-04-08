@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 const SignInPage: React.FC = () => {
 
   const handleGithubLogin = () => {
-    const clientId = "YOUR_GITHUB_CLIENT_ID";
+    const clientId = "Ov23li1hawvNYdMjLzkZ";
     const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/`;
     const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
       redirectUri
@@ -30,7 +30,7 @@ const SignInPage: React.FC = () => {
     <div className="bg-[#0b0b20] flex flex-col items-center justify-center text-white p-4">
       <p className="text-lg text-center mb-6">To continue your journey, <br /> please sign in:</p>
       <Link to="/wallet">
-        <button  className="bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+        <button onClick={handleGithubLogin} className="bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
           Sign in with Github
         </button>
       </Link>
