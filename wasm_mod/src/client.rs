@@ -74,16 +74,20 @@ pub async fn get_wallets() -> Vec<MyWallet> {
 }
 
 pub async fn get_active_network() -> Option<MyNetwork> {
-    // db::get_store_object::<MyNetwork>("networks", "active", Query::Key(JsValue::from_bool(true)))
-    //     .await
-    //     .ok()
-    //     .flatten()
-
-    db::get_all_store_objects::<MyNetwork>("networks")
+    // log("getting active network");
+    db::get_store_object::<MyNetwork>("networks", "active", Query::Key(JsValue::from_str("Y")))
         .await
-        .unwrap_or(Vec::new())
-        .into_iter()
-        .find(|n| n.active)
+        .ok()
+        .flatten()
+    
+
+    // db::get_all_store_objects::<MyNetwork>("networks")
+    //     .await
+    //     .inspect_err(|e|log(format!("error getting active network '{:?}'", e).as_str()))
+    //     .unwrap_or(Vec::new())
+    //     .into_iter()
+    //     // .inspect(|n|log(format!("current network '{:?}'", n).as_str()))
+    //     .find(|n| n.active)
 }
 
 pub async fn set_active_network(network_name: String) -> ClientResult<Option<MyNetwork>> {
@@ -93,21 +97,35 @@ pub async fn set_active_network(network_name: String) -> ClientResult<Option<MyN
         "network_name",
         Query::Key(JsValue::from_str(&network_name)),
     )
-    .await?;
-    log(&format!("set active from {:?} to {}", &changing_network, &network_name));
+    .await
+    .inspect_err(|_| log("cannot find network to set active"))?;
     if last_active_network.is_none() || changing_network.is_none() {
         Err(ClientError::Other(
             "Can't get active network or network to be set active".to_string(),
         ))
     } else {
         let mut last_active_network = last_active_network.unwrap();
-        let id = last_active_network.id;
-        last_active_network.active = false;
-        db::update_object("networks", last_active_network, Some(&JsValue::from(id))).await?;
+        // let id = last_active_network.id;
+        let name = last_active_network.name();
+        last_active_network.set_active("N".to_string());
+        // db::update_object("networks", last_active_network, Some(&JsValue::from(id))).await?;
+        db::update_object(
+            "networks",
+            last_active_network,
+            None, /*Some(&JsValue::from(name))*/
+        )
+        .await?;
         let mut changing_network = changing_network.unwrap();
-        changing_network.active = true;
-        let id = changing_network.id;
-        db::update_object("networks", changing_network, Some(&JsValue::from(id))).await?;
+        changing_network.set_active("Y".to_string());
+        // let id = changing_network.id;
+        let name = changing_network.name();
+        // db::update_object("networks", changing_network, Some(&JsValue::from(id))).await?;
+        db::update_object(
+            "networks",
+            changing_network,
+            None, /*Some(&JsValue::from(name))*/
+        )
+        .await?;
         Ok(get_active_network().await)
     }
 }

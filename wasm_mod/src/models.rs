@@ -29,30 +29,19 @@ pub struct MyNetworks {
 #[wasm_bindgen]
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct MyNetwork {
-    pub id: i32,
     name: String,
     address: String,
-    pub active: bool,
+    active: String,
 }
 
 #[wasm_bindgen]
 impl MyNetwork {
-    pub fn new_default_id(name: String, address: String, active: bool) -> MyNetwork {
-        MyNetwork{
-            id: Default::default(),
-            name,
-            address,
-            active,
-        }
-    }
-    
     #[wasm_bindgen(constructor)]
-    pub fn new(id: i32, name: String, address: String, active: bool) -> MyNetwork {
+    pub fn new( name: String, address: String, active: bool) -> MyNetwork {
         MyNetwork{
-            id,
             name,
             address,
-            active,
+            active: if active {"Y".to_string()} else {"N".to_string()},
         }
     }
     
@@ -71,5 +60,13 @@ impl MyNetwork {
     #[wasm_bindgen(setter)]
     pub fn set_address(&mut self, address: String) {
         self.address = address;
+    }
+    #[wasm_bindgen(getter)]
+    pub fn active(&self) -> String {
+        self.active.clone()
+    }
+    #[wasm_bindgen(setter)]
+    pub fn set_active(&mut self, active: String) {
+        self.active = active;
     }
 }

@@ -4,11 +4,14 @@ use idb::{
     Database, DatabaseEvent, Error, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
     TransactionMode,
 };
+use js_sys::Atomics::store;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::Wallet;
 use wasm_client_solana::{ClientError, ClientResult};
+use crate::client::get_networks;
 
 const IDB_VERSION: Option<u32> = None;
 
@@ -27,6 +30,7 @@ pub async fn create_database() -> Result<Database, Error> {
     let factory = Factory::new()?;
 
     factory.delete("soldevwalle")?;
+    log("database deleted");
 
     // Create an open request for the database
     let mut open_request = factory.open("soldevwalle", IDB_VERSION)?;
@@ -54,17 +58,20 @@ pub async fn create_database() -> Result<Database, Error> {
         // }
 
         // Prepare object store params
-        let mut store_params = ObjectStoreParams::new();
-        store_params.auto_increment(true);
-        store_params.key_path(Some(KeyPath::new_single("id")));
+        let mut id_key_store_params = ObjectStoreParams::new();
+        id_key_store_params.auto_increment(true);
+        id_key_store_params.key_path(Some(KeyPath::new_single("id")));
+        let mut name_key_store_params = ObjectStoreParams::new();
+        name_key_store_params.auto_increment(false);
+        name_key_store_params.key_path(Some(KeyPath::new_single("name")));
 
         // Create object stores
         // TODO use network name etc. as keys?
         let networks_store = database
-            .create_object_store("networks", store_params.clone())
+            .create_object_store("networks", name_key_store_params.clone())
             .unwrap();
         let mut active_index_params = IndexParams::new();
-        active_index_params.multi_entry(true);
+        active_index_params.multi_entry(false);
         // active_index_params.unique(true);
         networks_store
             .create_index(
@@ -86,8 +93,9 @@ pub async fn create_database() -> Result<Database, Error> {
         //     networks_store
         // ));
         let wallets_store = database
-            .create_object_store("wallets", store_params.clone())
+            .create_object_store("wallets", id_key_store_params.clone())
             .unwrap();
+        
 
         // // Prepare index params
         // let mut index_params = IndexParams::new();
@@ -114,31 +122,31 @@ pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
         .collect::<Vec<_>>();
     let hardcoded_networks = vec![
         MyNetwork::new(
-            0,
+            // 0,
             String::from("DEVNET"),
             String::from("https://api.devnet.solana.com"),
             true,
         ),
         MyNetwork::new(
-            1,
+            // 1,
             String::from("TESTNET"),
             String::from("https://api.devnet.solana.com"),
             false,
         ),
         MyNetwork::new(
-            2,
+            // 2,
             String::from("MAINNET"),
             String::from("https://api.devnet.solana.com"),
             false,
         ),
         MyNetwork::new(
-            3,
+            // 3,
             String::from("LOCALNET"),
             String::from("https://api.devnet.solana.com"),
             false,
         ),
         MyNetwork::new(
-            4,
+            // 4,
             String::from("DEBUG"),
             String::from("https://api.devnet.solana.com"),
             false,
@@ -151,32 +159,33 @@ pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
     log(format!("Adding missing networks: {:?}", hardcoded_networks).as_str());
     let store_name = "networks";
     for network in &hardcoded_networks {
-        let transaction = db.transaction(&[store_name], TransactionMode::ReadWrite)?;
+        let transaction = db.transaction( &[store_name], TransactionMode::ReadWrite)?;
         let store = transaction
             .object_store(store_name)
             .inspect_err(|e| log(format!("networks store error: {:?}", e).as_str()))?;
-
+        
         let serialized_value = serde_wasm_bindgen::to_value(&network).unwrap();
-        /*
-        let mut no_id_value: serde_json::Value = from_value(serialized_value).unwrap();
-        no_id_value.as_object_mut().unwrap().remove("id").unwrap();
-
-        let _id = store
-            .add(&to_value(&no_id_value).unwrap(), None)?
-            .await
-            .inspect_err(|e| {
-                log(format!("error adding network '{:?}': {:?}", &network, e).as_str())
-            });
-        */
-        store.add(&serialized_value, None)?;
+        
+        // let mut no_id_value: serde_json::Value = from_value(serialized_value).unwrap();
+        // no_id_value.as_object_mut().unwrap().remove("id");
+        //
+        // let _id = store
+        //     .add(&to_value(&no_id_value).unwrap(), None)?
+        //     .await
+        //     .inspect_err(|e| {
+        //         log(format!("error adding network '{:?}': {:?}", &network, e).as_str())
+        //     });
+        
+        store.add(&serialized_value, None /*Some(&to_value(&network.name()).unwrap())*/)?;
+        // store.add(&no_id_value, None)?;
 
         transaction.commit()?.await.inspect_err(|e| {
             log(format!("error committing network '{:?}'", e).as_str());
         })?;
     }
-    // log("try seed networks end");
-    // let _networks = get_networks_sync().await;
-    // log(format!("networks from db: {:?}", _networks).as_str());
+    log("try seed networks end");
+    let _networks = get_networks().await;
+    log(format!("networks from db: {:?}", _networks).as_str());
     Ok(())
 }
 
@@ -232,15 +241,14 @@ where
     let index = store
         .index(index_name)
         .map_err(|e| ClientError::Other(e.to_string()))?;
-
-    let store_request = index.get(query);
-    // log(format!("!!!!!{:#?}", store_request).as_str());
+    
+    let store_request = index.get(query.clone());
+    // log(format!("!!!!!({:#?} from {}) {:#?}", &query, store_name, store_request).as_str());
     Ok(store_request
         .map_err(|e| ClientError::Other(e.to_string()))?
         .await
         .map_err(|e| ClientError::Other(e.to_string()))?
-        .map(|r| parse_object::<O>(&r))
-        .flatten())
+        .and_then(|r| parse_object::<O>(&r)))
 }
 
 pub async fn add_object<O>(store_name: &str, entity: O) -> ClientResult<JsValue>
@@ -294,9 +302,8 @@ where
     let store = transaction
         .object_store(store_name)
         .map_err(|e| ClientError::Other(e.to_string()))?;
-    let serialized_value = serde_wasm_bindgen::to_value(&entity)
-        // .map_err(|e| idb::Error::UnexpectedJsType(&e.to_string(), &entity))
-        .unwrap();
+    let serialized_value = to_value(&entity)?;
+    log(format!("update object '{:?}'", serialized_value).as_str());
     let id = store
         .put(&serialized_value, key)
         .unwrap()
