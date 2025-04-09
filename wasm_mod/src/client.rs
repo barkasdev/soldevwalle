@@ -15,7 +15,6 @@ use solana_sdk::signature::{Keypair, Signature};
 use solana_sdk::signer::Signer;
 use solana_sdk::system_transaction;
 use std::str::FromStr;
-use spl_token::solana_program::log;
 use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::{FutureExt, TryFutureExt};
 use wasm_client_solana::{ClientError, ClientResult, SolanaRpcClient};
@@ -81,7 +80,6 @@ pub async fn get_active_network() -> Option<MyNetwork> {
         .await
         .ok()
         .flatten()
-    
 
     // db::get_all_store_objects::<MyNetwork>("networks")
     //     .await
@@ -159,7 +157,11 @@ pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
         } else {
             ("0".to_string(), "failed to get tokens balance".to_string())
         };
-        log(format!("requesting balance in network {} for {}: balance {}, tokens {}({})", network, address, balance, amt, amt_s).as_str());
+        log(format!(
+            "requesting balance in network {} for {}: balance {}, tokens {}({})",
+            network, address, balance, amt, amt_s
+        )
+        .as_str());
         Ok(MyBalance {
             balance: balance,
             tokens: format!("{}__{}", amt, amt_s),
@@ -176,7 +178,7 @@ pub async fn send_sol(
     wallet_store_password: String,
 ) -> ClientResult<Signature> {
     let wallets = get_wallets().await;
-    let wallet = wallets.iter().filter(|n| n.pubkey.eq(from_pubkey)).next();
+    let wallet = wallets.iter().find(|n| n.pubkey.eq(from_pubkey));
     if let Some(wallet_from_db) = wallet {
         //decrypt
         let from_keypair = Keypair::from_base58_string(
@@ -188,7 +190,10 @@ pub async fn send_sol(
             return Err(ClientError::Other("Can't get active network".to_string()));
         }
         let client = SolanaRpcClient::new(network_name.unwrap().as_str());
-        let latest_blockhash = client.get_latest_blockhash().await?;
+        let latest_blockhash = client
+            .get_latest_blockhash()
+            .await
+            .inspect_err(|e| log(format!("Error getting latest block: {}", e).as_str()))?;
         let to_pubkey = Pubkey::from_str(to_pubkey).unwrap();
         let tx = system_transaction::transfer(
             &from_keypair,
@@ -196,7 +201,12 @@ pub async fn send_sol(
             sol_to_lamports(sol),
             latest_blockhash,
         );
-        let signature = client.send_and_confirm_transaction(&tx.into()).await?;
+        let signature = client
+            .send_and_confirm_transaction(&tx.into())
+            .await
+            .inspect_err(|e| {
+                log(format!("failed to send and confirm transaction: {}", e).as_str())
+            })?;
         Ok(signature)
     } else {
         Err(ClientError::Other(
@@ -275,7 +285,10 @@ pub async fn seed_initial_data(wallet_store_password: String) {
                 let faucet = request_airdrop(pubkey.as_str(), 5.).await;
                 match faucet {
                     Ok(f) => {
-                        log(&format!("faucet successfully requested for {}: {}", pubkey, f));
+                        log(&format!(
+                            "faucet successfully requested for {}: {}",
+                            pubkey, f
+                        ));
                     }
                     Err(e) => {
                         log(&format!("Failed to request airdrop to {pubkey}: {e}"));
