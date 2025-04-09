@@ -15,6 +15,7 @@ use solana_sdk::signature::{Keypair, Signature};
 use solana_sdk::signer::Signer;
 use solana_sdk::system_transaction;
 use std::str::FromStr;
+use spl_token::solana_program::log;
 use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::{FutureExt, TryFutureExt};
 use wasm_client_solana::{ClientError, ClientResult, SolanaRpcClient};
@@ -67,6 +68,7 @@ pub async fn get_wallets() -> Vec<MyWallet> {
         wallet.account_info = Some(
             get_balance(wallet.pubkey.as_str())
                 .await
+                .inspect_err(|e| log(format!("Error getting balance: {}", e.to_string()).as_str()))
                 .unwrap_or_default(),
         );
     }
@@ -151,10 +153,16 @@ pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
         let client = SolanaRpcClient::new(network.as_str());
         let address = Pubkey::from_str(for_pubkey).unwrap();
         let balance = client.get_balance(&address).await?;
-        let tokens = client.get_token_account_balance(&address).await?;
+        let tokens = client.get_token_account_balance(&address).await;
+        let (amt, amt_s) = if let Ok(tokens_ui) = tokens {
+            (tokens_ui.amount, tokens_ui.ui_amount_string)
+        } else {
+            ("0".to_string(), "failed to get tokens balance".to_string())
+        };
+        log(format!("requesting balance in network {} for {}: balance {}, tokens {}({})", network, address, balance, amt, amt_s).as_str());
         Ok(MyBalance {
             balance: balance,
-            tokens: format!("{}__{}", tokens.amount, tokens.ui_amount_string),
+            tokens: format!("{}__{}", amt, amt_s),
         })
     } else {
         Err(ClientError::Other("Can't get active network".to_string()))
@@ -266,8 +274,8 @@ pub async fn seed_initial_data(wallet_store_password: String) {
                 let pubkey = wallet.as_string().unwrap();
                 let faucet = request_airdrop(pubkey.as_str(), 5.).await;
                 match faucet {
-                    Ok(_) => {
-                        log(&format!("faucet successfully requested for {}", pubkey));
+                    Ok(f) => {
+                        log(&format!("faucet successfully requested for {}: {}", pubkey, f));
                     }
                     Err(e) => {
                         log(&format!("Failed to request airdrop to {pubkey}: {e}"));
