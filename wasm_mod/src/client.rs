@@ -231,19 +231,20 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult
     }
 }
 
+
 pub async fn seed_initial_data(wallet_store_password: String) {
     log("seed_initial_data");
     let database = db::open_database()
         .await
         .inspect_err(|err| log(&format!("error opening db: {:?}", err)));
     if let Ok(db) = database {
-        db::try_seed_networks(&db).await.unwrap();
+        db::try_seed_networks().await.unwrap();
     } else {
         let db = db::create_database()
             .await
             .inspect_err(|e| log(format!("error creating db {:?}", e).as_str()));
         if let Ok(db) = db {
-            db::try_seed_networks(&db).await.unwrap();
+            db::try_seed_networks().await.unwrap();
         } else {
             log("Unable to create database");
         }

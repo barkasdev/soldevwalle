@@ -1,42 +1,29 @@
+use crate::client::get_networks;
 use crate::log;
 use crate::models::MyNetwork;
+use idb::event::VersionChangeEvent;
 use idb::{
     Database, DatabaseEvent, Error, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
     TransactionMode,
 };
-use js_sys::Atomics::store;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use serde_wasm_bindgen::{from_value, to_value};
+use serde_wasm_bindgen::to_value;
 use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::Wallet;
 use wasm_client_solana::{ClientError, ClientResult};
-use crate::client::get_networks;
 
-const IDB_VERSION: Option<u32> = None;
+const IDB_VERSION: Option<u32> = Some(1);
 
 pub async fn open_database() -> ClientResult<Database> {
     let factory = Factory::new().map_err(|e| ClientError::Other(e.to_string()))?;
-    factory
+    let mut open_request = factory
         .open("soldevwalle", IDB_VERSION)
         .inspect_err(|e| log(format!("error opening database: {:?}", e).as_str()))
-        .unwrap()
-        .await
-        .map_err(|e| ClientError::Other(e.to_string()))
-}
-pub async fn create_database() -> Result<Database, Error> {
-    // log("create database");
-    // Get a factory instance from global scope
-    let factory = Factory::new()?;
-
-    factory.delete("soldevwalle")?;
-    log("database deleted");
-
-    // Create an open request for the database
-    let mut open_request = factory.open("soldevwalle", IDB_VERSION)?;
-
-    // Add an upgrade handler for database
-    open_request.on_upgrade_needed(|event| {
+        .unwrap();
+    // .await
+    // .map_err(|e| ClientError::Other(e.to_string()))?;
+    open_request.on_upgrade_needed(|event: VersionChangeEvent| {
         // Get database instance from event
         let database = event.database().unwrap();
         let old_version = event.old_version();
@@ -47,6 +34,17 @@ pub async fn create_database() -> Result<Database, Error> {
         )
         .as_str());
 
+        if !object_store_exists(&database, "networks") {
+            create_networks_store(&database);
+            // try_seed_networks(&database).await.inspect_err(|e| {
+            //     log(format!("error creating networks database: {:?}", e).as_str())
+            // });
+        }
+
+        if !object_store_exists(&database, "wallets") {
+            create_wallets_store(&database);
+        }
+
         // if old_version < 1 {
         //     // Initial setup for version 1
         //     db.create_object_store("store1")?;
@@ -56,64 +54,107 @@ pub async fn create_database() -> Result<Database, Error> {
         //     // Upgrade to version 2
         //     db.create_object_store("store2")?;
         // }
-
-        // Prepare object store params
-        let mut id_key_store_params = ObjectStoreParams::new();
-        id_key_store_params.auto_increment(true);
-        id_key_store_params.key_path(Some(KeyPath::new_single("id")));
-        let mut name_key_store_params = ObjectStoreParams::new();
-        name_key_store_params.auto_increment(false);
-        name_key_store_params.key_path(Some(KeyPath::new_single("name")));
-
-        // Create object stores
-        // TODO use network name etc. as keys?
-        let networks_store = database
-            .create_object_store("networks", name_key_store_params.clone())
-            .unwrap();
-        let mut active_index_params = IndexParams::new();
-        active_index_params.multi_entry(false);
-        // active_index_params.unique(true);
-        networks_store
-            .create_index(
-                "active",
-                KeyPath::new_single("active"),
-                Some(active_index_params.clone()),
-            )
-            .unwrap();
-        networks_store
-            .create_index(
-                "network_name",
-                KeyPath::new_single("name"),
-                Some(active_index_params.clone()),
-            )
-            .unwrap();
-
-        // log(&format!(
-        //     "[save] networks store created: {:?}",
-        //     networks_store
-        // ));
-        let wallets_store = database
-            .create_object_store("wallets", id_key_store_params.clone())
-            .unwrap();
-        
-
-        // // Prepare index params
-        // let mut index_params = IndexParams::new();
-        // index_params.unique(true);
-        //
-        // // Create index on object store
-        // store
-        //     .create_index("email", KeyPath::new_single("email"), Some(index_params))
-        //     .unwrap();
     });
-
-    // `await` open request
-    let result_db = open_request.await;
-    result_db
+    open_request
+        .await
+        .map_err(|e| ClientError::Other(e.to_string()))
 }
 
-pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
+fn object_store_exists(db: &Database, store_name: &str) -> bool {
+    db.store_names().contains(&store_name.to_owned())
+}
+
+pub async fn create_database() -> Result<Database, Error> {
+    log("creating database");
+    // Get a factory instance from global scope
+    let factory = Factory::new()?;
+
+    factory.delete("soldevwalle")?;
+    log("database deleted");
+
+    // Create an open request for the database
+    let mut open_request = factory.open("soldevwalle", IDB_VERSION)?;
+
+    // Add an upgrade handler for database
+    open_request.on_upgrade_needed(|event: VersionChangeEvent| {
+        // Get database instance from event
+        let database = event.database().unwrap();
+        let old_version = event.old_version();
+        let new_version = event.new_version();
+        log(format!(
+            "upgrade needed. old db version: {:?}, new db version: {:?}",
+            old_version, new_version
+        )
+        .as_str());
+
+        if !object_store_exists(&database, "networks") {
+            create_networks_store(&database);
+            // try_seed_networks(&database).await.inspect_err(|e| {
+            //     log(format!("error creating networks database: {:?}", e).as_str())
+            // });
+        }
+
+        if !object_store_exists(&database, "wallets") {
+            create_wallets_store(&database);
+        }
+
+        // if old_version < 1 {
+        //     // Initial setup for version 1
+        //     db.create_object_store("store1")?;
+        // }
+        //
+        // if old_version < 2 {
+        //     // Upgrade to version 2
+        //     db.create_object_store("store2")?;
+        // }
+    });
+    let _ = try_seed_networks().await;
+
+    open_request.await
+}
+
+fn create_wallets_store(database: &Database) {
+    let mut id_key_store_params = ObjectStoreParams::new();
+    id_key_store_params.auto_increment(true);
+    id_key_store_params.key_path(Some(KeyPath::new_single("id")));
+    let wallets_store = database
+        .create_object_store("wallets", id_key_store_params.clone())
+        .unwrap();
+}
+
+fn create_networks_store(database: &Database) {
+    let mut name_key_store_params = ObjectStoreParams::new();
+    name_key_store_params.auto_increment(false);
+    name_key_store_params.key_path(Some(KeyPath::new_single("name")));
+
+    let networks_store = database
+        .create_object_store("networks", name_key_store_params.clone())
+        .unwrap();
+    let mut active_index_params = IndexParams::new();
+    active_index_params.multi_entry(false);
+    // active_index_params.unique(true);
+    networks_store
+        .create_index(
+            "active",
+            KeyPath::new_single("active"),
+            Some(active_index_params.clone()),
+        )
+        .unwrap();
+    networks_store
+        .create_index(
+            "network_name",
+            KeyPath::new_single("name"),
+            Some(active_index_params.clone()),
+        )
+        .unwrap();
+}
+
+pub async fn try_seed_networks() -> Result<(), Error> {
     log("try seed networks");
+    let db = open_database()
+        .await
+        .map_err(|e| Error::AddFailed(JsValue::from(e.to_string())))
+        .inspect_err(|err| log(&format!("error opening db: {:?}", err)))?;
     let network_addresses_in_db = get_all_store_objects::<MyNetwork>("networks")
         .await
         .unwrap_or(Vec::new())
@@ -159,13 +200,13 @@ pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
     log(format!("Adding missing networks: {:?}", hardcoded_networks).as_str());
     let store_name = "networks";
     for network in &hardcoded_networks {
-        let transaction = db.transaction( &[store_name], TransactionMode::ReadWrite)?;
+        let transaction = db.transaction(&[store_name], TransactionMode::ReadWrite)?;
         let store = transaction
             .object_store(store_name)
             .inspect_err(|e| log(format!("networks store error: {:?}", e).as_str()))?;
-        
+
         let serialized_value = serde_wasm_bindgen::to_value(&network).unwrap();
-        
+
         // let mut no_id_value: serde_json::Value = from_value(serialized_value).unwrap();
         // no_id_value.as_object_mut().unwrap().remove("id");
         //
@@ -175,8 +216,11 @@ pub async fn try_seed_networks(db: &Database) -> Result<(), Error> {
         //     .inspect_err(|e| {
         //         log(format!("error adding network '{:?}': {:?}", &network, e).as_str())
         //     });
-        
-        store.add(&serialized_value, None /*Some(&to_value(&network.name()).unwrap())*/)?;
+
+        store.add(
+            &serialized_value,
+            None, /*Some(&to_value(&network.name()).unwrap())*/
+        )?;
         // store.add(&no_id_value, None)?;
 
         transaction.commit()?.await.inspect_err(|e| {
@@ -241,7 +285,7 @@ where
     let index = store
         .index(index_name)
         .map_err(|e| ClientError::Other(e.to_string()))?;
-    
+
     let store_request = index.get(query.clone());
     // log(format!("!!!!!({:#?} from {}) {:#?}", &query, store_name, store_request).as_str());
     Ok(store_request

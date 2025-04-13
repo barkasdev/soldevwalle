@@ -7,21 +7,21 @@ let storedWallets = [];
 (async () => {
     await initWasmModule();
     console.log("wasm initialized");
-    await init_wasm('password'); // Logs a hello message from WASM
+    await init_wasm('test-password'); // Logs a hello message from WASM
     report_state("wasm initialized");
     
-
-    
-    // Fetch data immediately when the script runs
-    await fetchNetworks();
-    await fetchWallets();
-
-    //  Also fetch on extension install/update
-    chrome.runtime.onInstalled.addListener(async () => {
-        console.log("Extension installed - Fetching Networks & Wallets...");
-        await fetchNetworks();
-        await fetchWallets();
-    });
+    //
+    //
+    // // Fetch data immediately when the script runs
+    // await fetchNetworks();
+    // await fetchWallets();
+    //
+    // //  Also fetch on extension install/update
+    // chrome.runtime.onInstalled.addListener(async () => {
+    //     console.log("Extension installed - Fetching Networks & Wallets...");
+    //     await fetchNetworks();
+    //     await fetchWallets();
+    // });
 
     //  Listen for messages from React 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
