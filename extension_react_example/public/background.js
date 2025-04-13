@@ -78,7 +78,6 @@ let storedWallets = [];
                         const { from_pubkey, to_pubkey, amount, wallet_store_password } = request;
                         console.log(`Sending ${amount} SOL from ${from_pubkey} to ${to_pubkey}`);
 
-                        await initWasmModule();
                         const result = await send_sol(from_pubkey, to_pubkey, amount, wallet_store_password);
 
                         console.log("SEND_SOL success:", result);
