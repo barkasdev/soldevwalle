@@ -43,7 +43,7 @@ pub fn main() {
 #[wasm_bindgen]
 pub async fn init_wasm(wallet_store_password: String) {
     log("Initializing wasm...");
-    let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
+    // let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
     client::seed_initial_data(wallet_store_password).await;
     // match db {
     //     Ok(db) => {
