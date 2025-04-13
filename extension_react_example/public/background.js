@@ -8,7 +8,7 @@ let storedWallets = [];
     await initWasmModule();
     console.log("wasm initialized");
     await init_wasm('test-password'); // Logs a hello message from WASM
-    report_state("wasm initialized");
+    await report_state("wasm initialized");
     
 
 

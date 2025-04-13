@@ -9,7 +9,9 @@ echo Building wasm module...
 #RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build wasm_mod --release --no-typescript --out-dir "../extension_react_example/public/wasm" --out-name "wasm_mod" --target web
 RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build wasm_mod --release --no-typescript --out-dir "../extension_react_example/public/wasm" --out-name "wasm_mod" --target web
 RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build wasm_mod --release --no-typescript --out-dir "../extension/js/wasm" --out-name "wasm_mod" --target web
-
+cd extension_react_example
+npm run build
+cd ..
 ## wasm-pack creates bunch of useless files:
 echo Removing trash files...
 rm -f extension/js/wasm/.gitignore
