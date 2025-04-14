@@ -1,6 +1,6 @@
 // A static import is required in b/g scripts because they are executed in their own env
 // not connected to the content scripts where wasm is loaded automatically
-import initWasmModule, {get_wallets, request_airdrop, send_sol} from './wasm/wasm_mod.js';
+import initWasmModule, {get_wallets} from './wasm/wasm_mod.js';
 import {init_wasm, report_state} from './wasm/wasm_mod.js';
 
 
@@ -25,7 +25,7 @@ console.log("Background script started");
     console.log("wallets", wallets);
     // await request_airdrop("DAFXYLRXSdSSuwTWNVxxQ5eEVX9Rqw1FDwjohjUHomjC", 2);
     // await send_sol("EeWa2Z54UfR1DJsrHwbe4CL3eZdEUigZV77KPduKNzVx", "DAFXYLRXSdSSuwTWNVxxQ5eEVX9Rqw1FDwjohjUHomjC", 0.00001, "test-password");
-
+    // await delete_wallet("2b85ZxNAyZirNUQ1q7y7H6WNRCBfqL4MQViG1NA4BkjV");
     await report_state("wasm initialized");
 })();
 

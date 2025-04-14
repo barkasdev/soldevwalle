@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_client_solana::{ClientResult, RpcKeyedAccount};
 use wasm_client_solana::solana_account_decoder::parse_token::UiTokenAmount;
 
 /// Use this response type to discard the response payload
@@ -9,7 +10,7 @@ pub struct IgnoredData {}
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct MyBalance {
     pub balance: u64,
-    pub tokens: String, // UiTokenAmount, //TODO
+    pub tokens: String//Vec<(RpcKeyedAccount, ClientResult<UiTokenAmount>)>, // UiTokenAmount, //TODO
 }
 
 #[derive(Serialize, Deserialize, Debug)]

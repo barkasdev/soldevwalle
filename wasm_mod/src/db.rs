@@ -4,7 +4,7 @@ use crate::models::MyNetwork;
 use idb::event::VersionChangeEvent;
 use idb::{
     Database, DatabaseEvent, Error, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
-    TransactionMode,
+    Request, TransactionMode,
 };
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -108,18 +108,35 @@ pub async fn create_database() -> Result<Database, Error> {
         //     db.create_object_store("store2")?;
         // }
     });
-    let _ = try_seed_networks().await;
-
+    // log("try seed networks in create_database");
+    // let _ = try_seed_networks().await;
+    log("database created");
     open_request.await
 }
 
 fn create_wallets_store(database: &Database) {
     let mut id_key_store_params = ObjectStoreParams::new();
     id_key_store_params.auto_increment(true);
-    id_key_store_params.key_path(Some(KeyPath::new_single("id")));
+    id_key_store_params.key_path(Some(KeyPath::new_single("name"))); // id
     let wallets_store = database
         .create_object_store("wallets", id_key_store_params.clone())
         .unwrap();
+    let index_params = IndexParams::new();
+    wallets_store
+        .create_index(
+            "name",
+            KeyPath::new_single("name"),
+            Some(index_params.clone()),
+        )
+        .unwrap();
+    wallets_store
+        .create_index(
+            "pubkey",
+            KeyPath::new_single("pubkey"),
+            Some(index_params.clone()),
+        )
+        .unwrap();
+    log("wallets store created");
 }
 
 fn create_networks_store(database: &Database) {
@@ -147,10 +164,11 @@ fn create_networks_store(database: &Database) {
             Some(active_index_params.clone()),
         )
         .unwrap();
+    log("networks store created");
 }
 
 pub async fn try_seed_networks() -> Result<(), Error> {
-    log("try seed networks");
+    // log("try seed networks");
     let db = open_database()
         .await
         .map_err(|e| Error::AddFailed(JsValue::from(e.to_string())))
@@ -360,4 +378,27 @@ where
         .map_err(|e| ClientError::Other(e.to_string()))?;
 
     Ok(id)
+}
+
+pub async fn delete_store_object(
+    store_name: &str,
+    id_query: Query,
+) -> ClientResult<()> {
+    let database = open_database().await?;
+    let transaction = database
+        .transaction(&[store_name], TransactionMode::ReadWrite)
+        .map_err(|e| ClientError::Other(e.to_string()))?;
+    let store = transaction
+        .object_store(store_name)
+        .map_err(|e| ClientError::Other(e.to_string()))?;
+    let id = store
+        .delete(id_query)
+        .map_err(|e| ClientError::Other(e.to_string()))
+        .inspect_err(|e| log("delete object failure"))?;
+    transaction
+        .commit()
+        .map_err(|e| ClientError::Other(e.to_string()))?
+        .await
+        .map_err(|e| ClientError::Other(e.to_string()))?;
+    Ok(())
 }

@@ -35,7 +35,6 @@ wasm_client_solana = { version = "0.8", features = ["js"] }
 solana-sdk = "2.1"
 spl-token = "7.0"
 anyhow = "1.0"
-#deli = { version = "0.2.0", features = ["derive"] }
 idb = "0.6.4"
 aes-gcm = "0.10"
 pbkdf2 = "0.12"

@@ -43,35 +43,12 @@ pub fn main() {
 #[wasm_bindgen]
 pub async fn init_wasm(wallet_store_password: String) {
     log("Initializing wasm...");
-    // let db = db::create_database().await.inspect_err(|e| log(format!("error creating db: {:?}", e).as_str()));
+    // let db = db::create_database()
+    //     .await
+    //     .inspect_err(|e| log(format!("error creating db: {:?}", e).as_str())).unwrap();
+    log("<init_wasm> seeding");
     client::seed_initial_data(wallet_store_password).await;
-    // match db {
-    //     Ok(db) => {
-    //         if let Err(db_err) = db::try_seed_data(&db).await {
-    //             log(&format!("error seeding: {}", db_err));
-    //         }
-    //     }
-    //     Err(db_err) => {
-    //         log(&format!("error creating database: {}", db_err));
-    //     }
-    // }
-
-    // let client = SolanaRpcClient::new(DEVNET);
-    // let address = pubkey!("GDX3G2D84Mj99XGMkVrp9vsHUHTzzuW7uh5tHrpehKbQ");
-    // // log("requesting airdrop");
-    // // client
-    // //     .request_airdrop(&address, sol_to_lamports(1.0))
-    // //     .await.unwrap();
-    // let account = client.get_account(&address).await;
-    // // let drop = client.request_airdrop(&address, sol_to_lamports(1.0)).await;
-    // log(format!("{account:#?}").as_str());
-
-    // let _networks = get_networks().await;
-    // log(format!("(init_wasm) networks: {:#?}", _networks).as_str());
-
-    // let _wallets = get_wallets().await;
-    // log(format!("{:#?}", wallets).as_str());
-
+    
     log("init Wasm end");
 }
 
@@ -174,6 +151,16 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) {
 pub async fn send_sol(from_pubkey: &str, to_pubkey: &str, sol: f64, wallet_store_password: String) {
     let send_result = client::send_sol(from_pubkey, to_pubkey, sol, wallet_store_password).await;
     report_progress(&serde_json::to_string_pretty(&send_result).unwrap());
+}
+
+#[wasm_bindgen]
+pub async fn delete_wallet(wallet_name: String) {
+    let delete_result = client::delete_wallet(wallet_name.as_str()).await;
+    let delete_result = match delete_result {
+        Ok(_) => format!("Wallet {wallet_name} deleted successfully"),
+        Err(e) => e.to_string(),
+    };
+    report_progress(&serde_json::to_string(&delete_result).unwrap());
 }
 
 /// This is a proxy for report_progress() in progress.js

@@ -8,16 +8,21 @@ use crate::client::crypto_manager::CryptoManager;
 use crate::db::get_all_store_objects;
 use crate::models::{MyBalance, MyNetwork, MyWallet};
 use crate::{db, log};
+use futures_util::future::join_all;
 use idb::Query;
 use solana_sdk::native_token::sol_to_lamports;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature};
 use solana_sdk::signer::Signer;
 use solana_sdk::system_transaction;
+use spl_token::ID;
 use std::str::FromStr;
 use wasm_bindgen::JsValue;
 use wasm_client_solana::prelude::{FutureExt, TryFutureExt};
-use wasm_client_solana::{ClientError, ClientResult, SolanaRpcClient};
+use wasm_client_solana::rpc_filter::TokenAccountsFilter;
+use wasm_client_solana::solana_account_decoder::parse_token::UiTokenAmount;
+use wasm_client_solana::{ClientError, ClientResult, RpcKeyedAccount, SolanaRpcClient};
+use wasm_client_solana::solana_account_decoder::UiAccountData;
 // here go functions to export
 
 mod crypto_manager;
@@ -72,6 +77,10 @@ pub async fn get_wallets() -> Vec<MyWallet> {
         );
     }
     wallets
+}
+
+pub async fn delete_wallet(wallet_name: &str) -> ClientResult<()> {
+    db::delete_store_object("wallets", Query::Key(JsValue::from_str(wallet_name))).await
 }
 
 pub async fn get_active_network() -> Option<MyNetwork> {
@@ -151,20 +160,53 @@ pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
         let client = SolanaRpcClient::new(network.as_str());
         let address = Pubkey::from_str(for_pubkey).unwrap();
         let balance = client.get_balance(&address).await?;
-        let tokens = client.get_token_account_balance(&address).await;
-        let (amt, amt_s) = if let Ok(tokens_ui) = tokens {
-            (tokens_ui.amount, tokens_ui.ui_amount_string)
-        } else {
-            ("0".to_string(), "failed to get tokens balance".to_string())
-        };
-        log(format!(
-            "requesting balance in network {} for {}: balance {}, tokens {}({})",
-            network, address, balance, amt, amt_s
+        // log("getting connected token accounts");
+        let token_accounts = client
+            .get_token_accounts_by_owner(
+                &Pubkey::from_str(for_pubkey).unwrap(),
+                TokenAccountsFilter::ProgramId(ID),
+            )
+            .await?;
+        // log(format!("token accounts: {:#?}", token_accounts).as_str());
+        // log("getting token balances");
+        let token_balances = join_all(
+            token_accounts
+                .iter()
+                .map(|ac| client.get_token_account_balance(&ac.pubkey)),
         )
-        .as_str());
+        .await
+        .to_vec();
+        // log(format!("token balances: {:#?}", token_balances).as_str());
+        let accounts_balances = token_accounts
+            .into_iter()
+            .zip(token_balances)
+            .collect::<Vec<(RpcKeyedAccount, ClientResult<UiTokenAmount>)>>()
+            .iter()
+            .map(|(ra, cr)| {
+                match &ra.account.data {
+                    UiAccountData::Json(parsed_json) => {parsed_json.parsed.to_string()}
+                    _ => "".to_string()
+                }
+            } 
+            )
+            // .inspect(|s|log(s))
+            .collect::<Vec<String>>();
+
+        // let tokens = client.get_token_account_balance(&address).await;
+        // let (amt, amt_s) = if let Ok(tokens_ui) = tokens {
+        //     (tokens_ui.amount, tokens_ui.ui_amount_string)
+        // } else {
+        //     ("0".to_string(), "failed to get tokens balance".to_string())
+        // };
+        // log(format!(
+        //     "requesting balance in network {} for {}: balance {}, tokens {}({})",
+        //     network, address, balance, amt, amt_s
+        // )
+        // .as_str());
+        log(format!("{}", accounts_balances.join(",").to_string()).as_str());
         Ok(MyBalance {
             balance: balance,
-            tokens: format!("{}__{}", amt, amt_s),
+            tokens: accounts_balances.join(",").to_string(), //format!("{}__{}", amt, amt_s),
         })
     } else {
         Err(ClientError::Other("Can't get active network".to_string()))
@@ -231,19 +273,20 @@ pub async fn request_airdrop(to_pubkey: &str, sol_quantity: f64) -> ClientResult
     }
 }
 
-
 pub async fn seed_initial_data(wallet_store_password: String) {
     log("seed_initial_data");
     let database = db::open_database()
         .await
         .inspect_err(|err| log(&format!("error opening db: {:?}", err)));
     if let Ok(db) = database {
+        log("seeding initial networks");
         db::try_seed_networks().await.unwrap();
     } else {
         let db = db::create_database()
             .await
             .inspect_err(|e| log(format!("error creating db {:?}", e).as_str()));
         if let Ok(db) = db {
+            log("seeding networks after creating db");
             db::try_seed_networks().await.unwrap();
         } else {
             log("Unable to create database");
