@@ -48,7 +48,7 @@ pub async fn init_wasm(wallet_store_password: String) {
     //     .inspect_err(|e| log(format!("error creating db: {:?}", e).as_str())).unwrap();
     log("<init_wasm> seeding");
     client::seed_initial_data(wallet_store_password).await;
-    
+
     log("init Wasm end");
 }
 
@@ -118,8 +118,8 @@ pub async fn get_wallets() -> Promise {
     let f_wallets = client::get_wallets()
         .map(|wallets| {
             wallets
-                .iter()
-                .map(|w| serde_wasm_bindgen::to_value(&w).unwrap())
+                .into_iter()
+                .map(|w| serde_wasm_bindgen::to_value({ &w.cropped() }).unwrap())
                 .collect::<Vec<_>>()
         })
         // Convert the Vec<JsValue> to JsValue (Array)

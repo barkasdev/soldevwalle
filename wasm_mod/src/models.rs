@@ -22,6 +22,15 @@ pub struct MyWallet {
     pub account_info: Option<MyBalance>,
 }
 
+impl MyWallet {
+    pub fn cropped(self) -> Self {
+        Self{
+            keypair: "...".to_string(),
+            ..self
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MyNetworks {
     pub networks: Vec<MyNetwork>,

@@ -187,7 +187,7 @@ pub async fn get_balance(for_pubkey: &str) -> ClientResult<MyBalance> {
                     UiAccountData::Json(parsed_json) => {parsed_json.parsed.to_string()}
                     _ => "".to_string()
                 }
-            } 
+            }
             )
             // .inspect(|s|log(s))
             .collect::<Vec<String>>();
