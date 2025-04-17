@@ -17,5 +17,5 @@ async function loadWasmModule() {
   }
   
   // When the offscreen document loads, immediately attempt to load the WASM module.
-  loadWasmModule();
+  //loadWasmModule();
   

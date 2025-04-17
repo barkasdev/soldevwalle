@@ -12,31 +12,32 @@ let storedWallets = [];
     
 
 
-    // Fetch data immediately when the script runs
-    await fetchNetworks();
-    await fetchWallets();
-
-    //  Also fetch on extension install/update
-    chrome.runtime.onInstalled.addListener(async () => {
-        console.log("Extension installed - Fetching Networks & Wallets...");
-        await fetchNetworks();
-        await fetchWallets();
-    });
 
     //  Listen for messages from React 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             switch (request.type) {
                 case "GET_NETWORKS":
-                    console.log("Background - Sending Networks:", storedNetworks);
-                    sendResponse({ networks: storedNetworks });
-                    break;
+                    try {
+                        const networks = await get_networks_async();
+                        console.log("Background - Fetched Networks:", networks);
+                        sendResponse({ networks });
+                      } catch (error) {
+                        console.error("GET_NETWORKS error:", error);
+                        sendResponse({ success: false, message: "Failed to fetch networks", error });
+                      }
+                      break;
 
                 case "GET_WALLETS":
-                    console.log("Background - Sending Wallets:", storedWallets);
-                    sendResponse({ wallets: storedWallets });
-                    break;
-
+                    try {
+                        const wallets = await get_wallets();
+                        console.log("Background - Fetched Wallets:", wallets);
+                        sendResponse({ wallets });
+                      } catch (error) {
+                        console.error("GET_WALLETS error:", error);
+                        sendResponse({ success: false, message: "Failed to fetch wallets", error });
+                      }
+                      break;
                 case "SET_NETWORK":
                     try {
                         const networkName = request.networkName;

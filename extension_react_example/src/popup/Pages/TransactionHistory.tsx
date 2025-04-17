@@ -1,8 +1,18 @@
+/* eslint-disable */
 import React from "react";
 import { Link } from "react-router-dom";
 import AccountDropdown from "../Components/AccountDropdown";
 import SearchBar from "../Components/Searchbar";
 import { FaBars } from "react-icons/fa";
+
+interface Wallet {
+  name: string;
+  pubkey: string;
+  account_info?: {
+    balance?: number;
+    tokens?: any;
+  };
+}
 
 const transactions = [
   { section: "Recent activity", items: 3 },
@@ -23,7 +33,9 @@ const TransactionHistory: React.FC = () => {
         />
 
         {/* Account Dropdown */}
-        <AccountDropdown />
+        <AccountDropdown wallets={[]} selectedWallet={null} onWalletSelect={function (wallet: Wallet): void {
+          throw new Error("Function not implemented.");
+        }} />
 
         {/* Search Bar Component */}
         <SearchBar />

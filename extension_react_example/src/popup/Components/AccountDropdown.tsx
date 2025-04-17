@@ -5,43 +5,30 @@ import { FaChevronDown } from "react-icons/fa";
 interface Wallet {
     name: string;
     pubkey: string;
+    account_info?: {
+        balance?: number;
+        tokens?: any;
+    };
 }
 
 interface Props {
-    onWalletSelect?: (walletName: string) => void; //  Callback function
+    wallets: Wallet[];
+    selectedWallet: Wallet | null;
+    onWalletSelect: (wallet: Wallet) => void;
 }
 
-const AccountDropdown: React.FC<Props> = ({ onWalletSelect }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [wallets, setWallets] = useState<Wallet[]>([]);
-    const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
 
-    useEffect(() => {
-        // Fetch wallets from background.js
-        chrome.runtime.sendMessage({ type: "GET_WALLETS" }, (response) => {
-            if (response && response.wallets) {
-                console.log("AccountDropdown - Received Wallets:", response.wallets);
-                setWallets(response.wallets);
-                if (response.wallets.length > 0) {
-                    setSelectedWallet(response.wallets[0]); // Default to first wallet
-                    if (onWalletSelect) onWalletSelect(response.wallets[0].name); //  Notify WalletPage
-                }
-            } else {
-                console.error("AccountDropdown - No Wallets Received");
-            }
-        });
-    }, []);
+const AccountDropdown: React.FC<Props> = ({ wallets, selectedWallet, onWalletSelect }) => {
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleWalletSelect = (wallet: Wallet) => {
-        setSelectedWallet(wallet);
         setIsOpen(false);
-        if (onWalletSelect) onWalletSelect(wallet.name); // Notify WalletPage
+        onWalletSelect(wallet);
         chrome.storage.local.set({ selectedWallet: wallet });
     };
 
     return (
         <div className="relative">
-            {/* Selected Wallet Display */}
             <div
                 className="flex items-center gap-2 cursor-pointer p-2 rounded-md hover:bg-white/10 transition"
                 onClick={() => setIsOpen(!isOpen)}
@@ -51,19 +38,17 @@ const AccountDropdown: React.FC<Props> = ({ onWalletSelect }) => {
                 <FaChevronDown className="text-sm" />
             </div>
 
-            {/* Dropdown Menu */}
             {isOpen && (
                 <div className="absolute left-0 mt-2 w-40 bg-gray-800 text-white rounded-md shadow-lg overflow-hidden z-20">
                     <ul className="text-sm">
                         {wallets.map((wallet) => (
                             <li
                                 key={wallet.pubkey}
-                                className={`px-4 py-2 hover:bg-gray-700 cursor-pointer ${
-                                    selectedWallet?.pubkey === wallet.pubkey ? "font-bold bg-gray-700" : ""
-                                }`}
+                                className={`px-4 py-2 hover:bg-gray-700 cursor-pointer ${selectedWallet?.pubkey === wallet.pubkey ? "font-bold bg-gray-700" : ""
+                                    }`}
                                 onClick={() => handleWalletSelect(wallet)}
                             >
-                                {wallet.name} 
+                                {wallet.name}
                             </li>
                         ))}
                     </ul>
@@ -74,3 +59,4 @@ const AccountDropdown: React.FC<Props> = ({ onWalletSelect }) => {
 };
 
 export default AccountDropdown;
+

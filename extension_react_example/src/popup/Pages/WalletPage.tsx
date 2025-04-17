@@ -7,21 +7,36 @@ import NetworkDropdown from '../Components/NetworkDropdown';
 import SearchBar from '../Components/Searchbar';
 import { Link } from 'react-router-dom';
 
+interface Wallet {
+    name: string;
+    pubkey: string;
+    account_info?: {
+        balance?: number;
+        tokens?: any;
+    };
+}
+
+
 
 const WalletPage: React.FC = () => {
+    const [wallets, setWallets] = useState<Wallet[]>([]);
+    const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
     const [selectedNetwork, setSelectedNetwork] = useState<string>('');
-    const [selectedWallet, setSelectedWallet] = useState<any>(null);
     //check wallet tab
     useEffect(() => {
-        chrome.storage.local.get(['selectedWallet', 'selectedNetwork'], (result) => {
-            if (result?.selectedWallet) {
-                setSelectedWallet(result.selectedWallet);
-            }
-            if (result?.selectedNetwork) {
-                setSelectedNetwork(result.selectedNetwork.name || result.selectedNetwork); // depends on how you stored it
+        chrome.runtime.sendMessage({ type: "GET_WALLETS" }, (response) => {
+            if (response?.wallets) {
+                setWallets(response.wallets);
+
+                chrome.storage.local.get("selectedWallet", (res) => {
+                    const stored = res.selectedWallet;
+                    const found = response.wallets.find((w: Wallet) => w.pubkey === stored?.pubkey);
+                    setSelectedWallet(found || response.wallets[0]);
+                });
             }
         });
     }, []);
+
 
 
     return (
@@ -32,7 +47,11 @@ const WalletPage: React.FC = () => {
                 <NetworkDropdown onNetworkSelect={setSelectedNetwork} />
 
                 {/* Account Dropdown */}
-                <AccountDropdown onWalletSelect={(walletName) => setSelectedWallet(walletName)} />
+                <AccountDropdown
+                    wallets={wallets}
+                    selectedWallet={selectedWallet}
+                    onWalletSelect={(wallet) => setSelectedWallet(wallet)}
+                />
 
                 {/* Search Bar Component */}
                 <SearchBar />
@@ -40,11 +59,14 @@ const WalletPage: React.FC = () => {
 
             {/* Balance */}
             <div className="pt-6 text-center">
-                <h1 className="text-5xl font-bold"> {selectedWallet?.account_info?.balance != null
-                    ? `$${selectedWallet.account_info.balance.toFixed(2)}`
-                    : '$0.00'}</h1>
+                <h1 className="text-5xl font-bold">
+                    {selectedWallet?.account_info?.balance == null
+                        ? 'Fetching balance...'
+                        : `${(selectedWallet.account_info.balance / 1_000_000_000).toFixed(2)} SOL`}
+                </h1>
                 <p className="text-sm text-gray-400 mt-2">+ $0.00 + 0.00%</p>
             </div>
+
 
             {/* Action Buttons */}
             <div className="flex gap-3 mt-4">
