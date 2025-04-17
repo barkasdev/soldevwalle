@@ -6,6 +6,9 @@ import AccountDropdown from '../Components/AccountDropdown';
 import NetworkDropdown from '../Components/NetworkDropdown';
 import SearchBar from '../Components/Searchbar';
 import { Link } from 'react-router-dom';
+import solanaLogo from '../assets/solana-sol-logo.png';
+import ethereumLogo from '../assets/ethereum-eth-logo.png';
+import bitcoinLogo from '../assets/bitcoin-btc-logo.png';
 
 interface Wallet {
     name: string;
@@ -92,7 +95,7 @@ const WalletPage: React.FC = () => {
             <div className="w-full flex flex-col mt-4 gap-2">
                 <div className="bg-white/10 rounded-lg p-2 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <img src="https://cryptologos.cc/logos/solana-sol-logo.png" alt="Solana" className="w-6 h-6" />
+                        <img src= {solanaLogo} alt="Solana" className="w-6 h-6" />
                         <div>
                             <p className="font-semibold">Solana</p>
                             <p className="text-xs text-gray-400">0 SOL</p>
@@ -103,7 +106,7 @@ const WalletPage: React.FC = () => {
 
                 <div className="bg-white/10 rounded-lg p-2 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Ethereum" className="w-6 h-6" />
+                        <img src= {ethereumLogo} alt="Ethereum" className="w-6 h-6" />
                         <div>
                             <p className="font-semibold">Ethereum</p>
                             <p className="text-xs text-gray-400">0 ETH</p>
@@ -114,7 +117,7 @@ const WalletPage: React.FC = () => {
 
                 <div className="bg-white/10 rounded-lg p-2 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="Bitcoin" className="w-6 h-6" />
+                        <img src={bitcoinLogo} alt="Bitcoin" className="w-6 h-6" />
                         <div>
                             <p className="font-semibold">Bitcoin</p>
                             <p className="text-xs text-gray-400">0 BTC</p>
