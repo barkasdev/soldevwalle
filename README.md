@@ -1,72 +1,113 @@
-# solldevwalle
+# SolDevWalle
 
-Solana Developer Wallet Extension
+**SolDevWalle** is a Solana developer wallet browser extension designed to streamline smart contract testing and development. It integrates WebAssembly (WASM) modules compiled from Rust, providing a seamless development experience.
 
-To deploy first run the following command in the main folder:
-For Windows
-$env:RUSTFLAGS='--cfg getrandom_backend="wasm_js"'; wasm-pack build wasm_mod --release --no-typescript --out-dir "../extension_react_example/public/wasm" --out-name "wasm_mod" --target web
-For Linux
-wasm-pack build wasm_mod --release --no-typescript --out-dir "../extension_react_example/public/wasm" --out-name "wasm_mod" --target web
-or simply run build.sh
+---
 
-Afterwards in the extension_react_example run
+## 🚀 Features
+
+* Lightweight and developer-friendly Solana wallet extension.
+* Built with React and Rust for optimal performance.
+* Supports both Chrome and Firefox browsers.
+* Includes a WASM module for enhanced cryptographic operations.
+* Precompiled extension packages available for quick setup.
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+* [Rust](https://www.rust-lang.org/tools/install)
+* [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
+* [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/)
+
+### Building the WASM Module
+
+Navigate to the project root directory and execute the following command:
+
+```bash
+wasm-pack build wasm_mod --release --no-typescript \
+  --out-dir extension_react_example/public/wasm \
+  --out-name wasm_mod --target web
+```
+
+
+
+For Windows PowerShell users:
+
+```powershell
+$env:RUSTFLAGS='--cfg getrandom_backend="wasm_js"'
+wasm-pack build wasm_mod --release --no-typescript `
+  --out-dir extension_react_example/public/wasm `
+  --out-name wasm_mod --target web
+```
+
+
+
+### Running the React Application
+
+Navigate to the `extension_react_example` directory:
+
+```bash
+cd extension_react_example
 npm install
-
-and 
-
-npm run build 
-
-in that order
-
-
-Unpack the build folder when loading the extension in the browser
-
-
-For github authentication 
-
-inside manifest.json oauth2
-change client id to your github client id
-
-inside SignIn page
-change client id to your github client id
-change redirect redirectUri to deployed Wallet Page URL
-
-then inside OAuth app Replace the Homepage and Callback URL with Wallet Page URL after deployment
-
-
-./build.sh
-
-builds and packs extensions chrome.zip, firefox.zip
-
-* Debug in `Chrome`: 
-* Extensions -> Manage extensions
-* 'Load unpacked', choose `extension` folder
-* To see extension console: `Service Worker` link (not dev tools)
-* if javascript/html changed: no need to rebuild, 'reload' in Chrome extensions
-
-* ext html: popup.html (initializes every time on toolbar click) + popup.js
-* service worker: background.js (initializes wasm and exposes interfaces) 
-* messages bus: progress.js (communicates wasm <-> progress.js <-> popup.js)
-* from wasm to popup:
-  * 
-```rust
-#[wasm_bindgen(module = "/src/progress.js")]
-extern "C" {
-pub fn report_progress(msg: &str);
-}
-``` 
-* from popup to wasm:
-    * popup.js
-```javascript
-      await chrome.runtime.sendMessage({ action: "btn_add", additional_data: 'FROM POPUP TO BACK' });
+npm start
 ```
-*
-     *    --> background.js
 
-```javascript
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+
+
+This will start the development server and open the application in your default browser.
+
+---
+
+## 📦 Packaging the Extension
+
+To build the extension packages for Chrome and Firefox:
+
+```bash
+bash build.sh
 ```
-*    
-  * calls exposed wasm function
-  * wasm response: see report_progress
-  
+
+
+
+This script will generate `chrome.zip` and `firefox.zip` files, which can be loaded into their respective browsers.
+
+---
+
+## 🧩 Loading the Extension
+
+### Chrome
+
+1. Open `chrome://extensions/` in your Chrome browser.
+2. Enable "Developer mode" using the toggle switch.
+3. Click on "Load unpacked" and select the `extension` directory.
+
+
+## 📁 Project Structure
+
+```
+soldevwalle/
+├── wasm_mod/                   # Rust source code for the WASM module
+├── extension_react_example/    # React frontend for the extension
+├── extension/                  # Compiled extension files
+├── build.sh                    # Script to build extension packages
+├── chrome.zip                  # Chrome extension package
+├── firefox.zip                 # Firefox extension package
+├── README.md                   # Project documentation
+└── LICENSE                     # MIT License
+```
+
+
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+For more information and updates, visit the [GitHub repository](https://github.com/barkasdev/soldevwalle).
+
+---
