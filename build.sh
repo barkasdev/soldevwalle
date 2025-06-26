@@ -5,6 +5,19 @@
 ## --target - always use "web"!
 ## See https://rustwasm.github.io/wasm-pack/book/commands/build.html
 echo Building wasm module...
+echo "Checking wasm-bindgen-cli version..."
+
+REQUIRED_VERSION="0.2.100"
+INSTALLED_VERSION=$(wasm-bindgen --version 2>/dev/null | awk '{print $2}')
+
+if [ "$INSTALLED_VERSION" != "$REQUIRED_VERSION" ]; then
+  echo "Installing wasm-bindgen-cli version $REQUIRED_VERSION..."
+  cargo install wasm-bindgen-cli --version "$REQUIRED_VERSION" --force
+else
+  echo "wasm-bindgen-cli $REQUIRED_VERSION already installed."
+fi
+
+echo "🚀 Building wasm module..."
 #RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build wasm_mod --dev --no-typescript --out-dir "../extension/js/wasm" --out-name "wasm_mod" --target web
 #RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build wasm_mod --release --no-typescript --out-dir "../extension_react_example/public/wasm" --out-name "wasm_mod" --target web
 RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build wasm_mod --release --no-typescript --out-dir "../extension_react_example/public/wasm" --out-name "wasm_mod" --target web
@@ -12,21 +25,28 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' wasm-pack build wasm_mod --release
 cd extension_react_example
 npm run build
 cd ..
-## wasm-pack creates bunch of useless files:
-echo Removing trash files...
+echo "Removing trash files..."
 rm -f extension/js/wasm/.gitignore
 rm -f extension/js/wasm/package.json
 
-## create chrome package and exclude manifest for firefox
-## see ReadMe for more info on manifest config
-## subshell call with cd is required to avoid placing /extension/ folder as the root
-rm -f chrome.zip && \
-(cd extension && zip -rq ../chrome.zip . -x manifest_ff.json -x manifest.json) && \
-printf "@ manifest_cr.json\n@=manifest.json\n" | zipnote -w chrome.zip && \
-echo Chrome package: chrome.zip
+# Create Chrome package
+echo "Packaging Chrome extension..."
+rm -f chrome.zip
+(cd extension && zip -rq ../chrome.zip . -x manifest_ff.json -x manifest.json)
+if [ -f chrome.zip ]; then
+  echo "@ manifest_cr.json\n@=manifest.json" | zipnote chrome.zip | zipnote -w chrome.zip || echo "Warning: zipnote failed for Chrome"
+  echo "✅ Chrome package: chrome.zip"
+else
+  echo "❌ Failed to create chrome.zip"
+fi
 
-## create firefox package, exclude chrome manifest and rename FF manifest to its default file name
-rm -f firefox.zip && \
-(cd extension && zip -rq ../firefox.zip . -x manifest_cr.json -x manifest.json) && \
-printf "@ manifest_ff.json\n@=manifest.json\n" | zipnote -w firefox.zip && \
-echo Firefox package: firefox.zip
+# Create Firefox package
+echo "Packaging Firefox extension..."
+rm -f firefox.zip
+(cd extension && zip -rq ../firefox.zip . -x manifest_cr.json -x manifest.json)
+if [ -f firefox.zip ]; then
+  echo "@ manifest_ff.json\n@=manifest.json" | zipnote firefox.zip | zipnote -w firefox.zip || echo "Warning: zipnote failed for Firefox"
+  echo "✅ Firefox package: firefox.zip"
+else
+  echo "❌ Failed to create firefox.zip"
+fi

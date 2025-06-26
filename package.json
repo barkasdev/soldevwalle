@@ -4,6 +4,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "copy-webpack-plugin": "^13.0.0"
+    "copy-webpack-plugin": "^13.0.0",
+    "react-app-rewired": "^2.2.1"
   }
 }

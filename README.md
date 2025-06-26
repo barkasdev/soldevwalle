@@ -66,7 +66,7 @@ This will start the development server and open the application in your default 
 To build the extension packages for Chrome and Firefox:
 
 ```bash
-bash build.sh
+sh build.sh
 ```
 
 

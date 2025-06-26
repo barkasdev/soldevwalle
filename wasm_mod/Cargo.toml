@@ -26,7 +26,7 @@ getrandom = { version = "0.3", features = ["wasm_js"] }
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
-console_error_panic_hook = { version = "0.1.7"}
+console_error_panic_hook = { version = "0.1.7" }
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
 # allocator, however.
@@ -45,11 +45,32 @@ futures = "0.3.31"
 
 [dependencies.web-sys]
 version = "0.3"
-features = ["console", "WorkerGlobalScope", "Window", "Headers", "Request", "RequestInit", "RequestMode",
-    "Response", "FileSystem", "Navigator", "StorageManager", "Storage", "FileSystemDirectoryHandle", "FileSystemFileHandle",
-    "FileSystemWritableFileStream", "IdbFactory", "IdbDatabase", "IdbObjectStore", "IdbTransaction",
-    "IdbRequest", "IdbOpenDbRequest", "IdbCursor", "IdbCursorWithValue",
-    "IdbKeyRange", ]
+features = [
+    "console",
+    "WorkerGlobalScope",
+    "Window",
+    "Headers",
+    "Request",
+    "RequestInit",
+    "RequestMode",
+    "Response",
+    "FileSystem",
+    "Navigator",
+    "StorageManager",
+    "Storage",
+    "FileSystemDirectoryHandle",
+    "FileSystemFileHandle",
+    "FileSystemWritableFileStream",
+    "IdbFactory",
+    "IdbDatabase",
+    "IdbObjectStore",
+    "IdbTransaction",
+    "IdbRequest",
+    "IdbOpenDbRequest",
+    "IdbCursor",
+    "IdbCursorWithValue",
+    "IdbKeyRange",
+]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
