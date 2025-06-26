@@ -1,0 +1,1 @@
+function handleResponse(e){}function handleError(e){}export function report_progress(e){chrome.runtime.sendMessage(e).then(handleResponse,handleError),console.log("reported progress to events: ",e)}

@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.js": "/static/js/main.js",
+    "main.css": "/static/css/main.4323dbca.css",
+    "background.js": "/background.js",
+    "content.js": "/static/js/content.js",
+    "static/js/787.js": "/static/js/787.js",
+    "static/media/wasm_mod_bg.wasm": "/static/media/wasm_mod_bg.b8c60b4d42bbe7b038b6.wasm",
+    "static/wasm/wasm_mod_bg.wasm": "/static/wasm/wasm_mod_bg.wasm",
+    "static/media/ethereum-eth-logo.png": "/static/media/ethereum-eth-logo.a85b6de0dc4a013ae2f8.png",
+    "static/media/solana-sol-logo.png": "/static/media/solana-sol-logo.88dd9cd2498aebe1ee8c.png",
+    "static/media/bitcoin-btc-logo.png": "/static/media/bitcoin-btc-logo.82491fef997ab841639c.png",
+    "static/wasm/wasm_mod.js": "/static/wasm/wasm_mod.js",
+    "index.html": "/index.html",
+    "static/wasm/snippets/wasm_mod-/src/progress.js": "/static/wasm/snippets/wasm_mod-bc4ca452742d1bb1/src/progress.js",
+    "main.js.map": "/static/js/main.js.map",
+    "main.4323dbca.css.map": "/static/css/main.4323dbca.css.map",
+    "background.js.map": "/static/js/background.js.map",
+    "content.js.map": "/static/js/content.js.map",
+    "787.js.map": "/static/js/787.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.js",
+    "static/css/main.4323dbca.css"
+  ]
+}
