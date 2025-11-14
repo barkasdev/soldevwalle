@@ -1,3 +1,5 @@
+# Project is on hold and not maintaned because of lack of funding. It's opensource and you could fork it
+
 # SolDevWalle
 
 **SolDevWalle** is a Solana developer wallet browser extension designed to streamline smart contract testing and development. It integrates WebAssembly (WASM) modules compiled from Rust, providing a seamless development experience.
